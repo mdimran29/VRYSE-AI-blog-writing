@@ -1,6 +1,6 @@
 # What has been built so far — and what it actually does
 
-_Last updated: 2026-10-12, after Step 6 of [plan.md](../plan.md)._
+_Last updated: 2026-10-12, after Step 7 of [plan.md](../plan.md)._
 
 This document explains, in plain language, every part of the system that exists today: what was built, what it does when you run it, how to try it yourself, and what the results were. For the full design, see [ARCHITECTURE.md](../ARCHITECTURE.md).
 
@@ -21,10 +21,10 @@ You give the system a short **brief**, for example "an article about moving empl
         │                                                         │
         └──────────────┬──────────────────────────────────────────┘
                        ▼
- Brief ──► ⑤ Find similar passages ──► ⑥ Plan outline ──► Write ──► Check ──► (Fix once) ──► Saved article
+ Brief ──► ⑤ Find similar passages ──► ⑥ Plan outline ──► Write ──► Check ──► (Fix once) ──► ⑦ Score ──► Saved article + scores
 ```
 
-**What is not built yet:** scoring the article (Step 7), human feedback and improvement (Steps 9–10), and the web interface (Step 10). Today everything runs from the command line.
+**What is not built yet:** proving the scores are trustworthy (Step 8), human feedback and improvement (Step 9), and the web interface (Step 10). Today everything runs from the command line.
 
 ---
 
@@ -183,21 +183,75 @@ Every article followed the Routematic shape (intro → Key Takeaways → section
 
 ---
 
+### Step 7 — Scoring the article
+
+**Built:** the evaluator (`src/lib/evaluation/`). Every new article is scored automatically, and saved articles can be re-scored.
+
+**What it actually does:** it gives the article a score from 0 to 100 on seven **dimensions**, then combines them into one **overall** score. Each dimension has up to two halves:
+
+| Dimension | Weight | Measured by code | Judged by the AI judge |
+|---|---|---|---|
+| Structure | 20% | Section counts, intro and closing length, FAQ present and last | Flow; intro and conclusion follow Routematic's patterns |
+| Style | 20% | Sentence and paragraph rhythm, bold, links, "you"/"we", AI-style phrases, **how close the article is to Routematic's real articles** (embeddings) | Voice and the do/don't rules |
+| Relevance | 15% | How close the article is to the brief, compared with Routematic's articles | On-topic, serves the audience |
+| Completeness | 15% | Length vs target, required sections | Each key point: covered / partial / missing |
+| Tone | 10% | — | Matches Routematic's tone |
+| Readability | 10% | Reading grade vs Routematic's range | Clear and easy to skim |
+| Specificity | 10% | Numbers per 1,000 words, minus 10 points per unsupported number | Generic filler; **claims not supported by the sources** |
+
+- **"Measured by code" uses Routematic's real ranges.** If a value sits where 80% of Routematic's articles sit (p10–p90), it scores 100. Further outside, the score drops to 0.
+- **The judge is a different AI company's model** (Gemini, while the writer is GPT), so it doesn't favour its own writing. It must quote the article as evidence for every score, and it is never told which version it's reading.
+- **Weaknesses come from three sources** (judge, measurements, checks) and are ranked by severity, each with a concrete fix. These become the input for human feedback in Step 9.
+- **If the judge fails**, the code-measured scores are still shown.
+- **Ready for Step 9:** a "which is better, A or B?" judge, which shows the two versions in random order so position can't bias it.
+
+**Result on the EV article:**
+
+| Dimension | Score |
+|---|---|
+| Structure | 88 |
+| Style | **54** |
+| Relevance | 100 |
+| Completeness | 100 |
+| Tone | 50 |
+| Readability | 88 |
+| Specificity | **63** |
+| **Overall** | **78.4** |
+
+The main weaknesses it found are real and fixable:
+- Paragraphs average **14 words**; Routematic's are 25–49.
+- **93%** of paragraphs are a single sentence; Routematic's range is 10–60%.
+- **41** bold phrases per 1,000 words; Routematic uses 3–17.
+- **No links** at all; Routematic has 3–6 per 1,000 words.
+- The judge's main point: claims like "lower maintenance" or "6–18 month rollouts" have no source. It quoted seven of them.
+
+**A problem found by testing:** re-scoring the *same* article gave **84.7 instead of 78.4**. The judge gave tone 3/5 the first time and 5/5 the second; the code-measured half didn't change at all. So one judge run can move the score by about ±6 points. This matters because the system must later prove that an improved article is *really* better, not just luckier. Step 8 measures this properly.
+
+**Two smaller fixes:**
+- The judge sometimes counted the required FAQ as a "key point". Coverage now counts only the brief's real key points.
+- The judge is never answered from the development cache, so re-scoring always makes a fresh, independent judgement.
+
+**Cost:** about **$0.027 per score**, mostly the judge's "thinking". A full article plus its score costs about $0.05.
+
+**Try it:** `pnpm vryse generate --brief examples/briefs/ev-fleet-transition.json` (prints the scores), or `pnpm vryse evaluate --run <run id>`
+
+---
+
 ## 4. Money and time so far
 
 | Item | Amount |
 |---|---|
-| Total AI spend for all building and testing | **$0.20** |
-| Free credit left (of $5 per 30 days) | **$4.80** |
-| Cost of one fresh article today | about **$0.02–0.03** |
-| Time for one fresh article | about **60 seconds** |
+| Total AI spend for all building and testing | **$0.25** |
+| Free credit left (of $5 per 30 days) | **$4.75** |
+| Cost of one fresh article, including its score | about **$0.05** |
+| Time for one fresh article, including its score | about **2 minutes** |
 
 ---
 
 ## 5. How to check that everything works
 
 ```bash
-pnpm test        # 112 automatic tests
+pnpm test        # 135 automatic tests
 pnpm typecheck   # TypeScript has no errors
 pnpm lint        # code style is clean
 pnpm vryse ping  # all three AI models answer
@@ -210,7 +264,8 @@ pnpm vryse ping  # all three AI models answer
 - **Fact-checking is partial.** The number check only knows whether a number appears *somewhere* in the Routematic articles. A common number like "30%" used in a different context still passes. The Step 7 judge will compare claims with the actual passages.
 - **The style profile is based on one company** with 54 articles. Ranges like "5–10 sections" are only as reliable as that sample.
 - **The length correction (0.78)** was measured on a handful of articles with one model.
-- **There's no scoring yet**, so "reads like Routematic" is currently judged by reading the output, not by a number. Step 7 adds the scores.
+- **The AI judge is noisy.** The same article scored 78.4 and 84.7 on two runs. Until Step 8 measures this, one score should be treated as roughly ±6 points.
+- **The scores aren't proven yet.** Step 8 checks that real Routematic articles score high and a generic AI article scores low; until then, the numbers are unvalidated.
 
 ---
 
@@ -218,8 +273,7 @@ pnpm vryse ping  # all three AI models answer
 
 | Step | What it will add |
 |---|---|
-| 7 — Evaluator | Scores for structure, style, relevance, completeness, tone, readability and specificity, plus written weaknesses with quotes as evidence |
-| 8 — Calibration | Proof that the scores mean something: real Routematic articles should score high and a generic AI article low |
+| 8 — Calibration | Proof that the scores mean something: real Routematic articles should score high and a generic AI article low. Also measure the judge's noise and set how big an improvement must be to count. |
 | 9 — Feedback loop | A person's feedback becomes clear instructions, the article is revised, and the system checks each instruction was followed |
 | 10 — Web interface | The whole flow in a browser: brief → article → scores → feedback → improved article → side-by-side comparison |
 | 11–12 | The before/after demo and the final README |

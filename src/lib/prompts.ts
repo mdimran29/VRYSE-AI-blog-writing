@@ -7,7 +7,7 @@ const cache = new Map<string, string>();
 export function loadPrompt(name: string, vars: Record<string, string> = {}): string {
   let template = cache.get(name);
   if (!template) {
-    template = fs.readFileSync(path.join(process.cwd(), "src/lib/generation/prompts", `${name}.md`), "utf8");
+    template = fs.readFileSync(path.join(process.cwd(), "src/lib/prompts", `${name}.md`), "utf8");
     cache.set(name, template);
   }
   return template.replace(/\{\{(\w+)\}\}/g, (_, key: string) => {

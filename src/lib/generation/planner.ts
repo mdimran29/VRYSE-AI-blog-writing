@@ -2,11 +2,11 @@ import type { LanguageModel } from "ai";
 import { callObject } from "@/lib/llm/call";
 import { OutlineSchema, type Issue, type Outline, type ResolvedBrief } from "@/lib/schemas/generation";
 import type { CompanyStyleProfile } from "@/lib/schemas/profile";
-import { loadPrompt } from "./prompts";
+import { loadPrompt } from "@/lib/prompts";
 import { renderStyleGuide } from "./style-guide";
 
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
-const overlaps = (a: string, b: string) => norm(a).includes(norm(b)) || norm(b).includes(norm(a));
+export const overlaps = (a: string, b: string) => norm(a).includes(norm(b)) || norm(b).includes(norm(a));
 
 /** True when a required section (by name) is satisfied by the given headings or special parts. */
 export function hasSection(required: string, headings: string[], parts: { faq: boolean; keyTakeaways: boolean; conclusion: boolean }): boolean {

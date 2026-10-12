@@ -12,7 +12,8 @@ import { buildProfile } from "@/lib/analysis/profile";
 import { buildIndex, loadIndex } from "@/lib/retrieval/store";
 import { search, selectExcerpts } from "@/lib/retrieval/search";
 import type { ChunkRole } from "@/lib/retrieval/chunks";
-import { runGeneration } from "@/lib/pipeline";
+import { evaluateIteration, runGeneration } from "@/lib/pipeline";
+import type { EvaluationResult } from "@/lib/evaluation/evaluate";
 import fs from "node:fs";
 import { llmCalls } from "@/lib/db/schema";
 import { callObject, type LlmRole } from "@/lib/llm/call";
@@ -193,6 +194,29 @@ program
     console.log(`Excerpt budget used: ~${ex.tokens}/${opts.maxTokens} tokens`);
   });
 
+function printEvaluation(e: EvaluationResult) {
+  const bar = (n: number) => "█".repeat(Math.round(n / 10)).padEnd(10, "·");
+  console.log(`\nOverall ${e.overall.toFixed(1)}/100${e.capped ? " (capped: a required section is missing)" : ""}${e.judge.available ? "" : ` — judge unavailable: ${e.judge.error}`}`);
+  for (const [name, d] of Object.entries(e.dimensions)) {
+    const parts = [d.deterministic !== null && `measured ${d.deterministic.toFixed(0)}`, d.judge !== null && `judge ${d.judge.toFixed(0)}`].filter(Boolean).join(", ");
+    console.log(`  ${name.padEnd(13)} ${bar(d.score)} ${d.score.toFixed(0).padStart(3)}  (${parts}; weight ${(d.weight * 100).toFixed(0)}%)`);
+  }
+  if (e.keyPoints.length) console.log(`Key points: ${e.keyPoints.map((k) => `${k.status === "covered" ? "✓" : k.status === "partial" ? "~" : "✗"} ${k.point}`).join(" · ")}`);
+  if (e.summary) console.log(`Judge: ${e.summary}`);
+  console.log("Top weaknesses:");
+  for (const w of e.weaknesses.slice(0, 6)) console.log(`  [${w.severity}/${w.source}] ${w.issue}${w.recommendation ? ` → ${w.recommendation}` : ""}`);
+  if (e.unsupportedClaims.length) console.log(`Unsupported claims (judge): ${e.unsupportedClaims.map((c) => `"${c.quote.slice(0, 80)}"`).join(" · ")}`);
+}
+
+program
+  .command("evaluate")
+  .description("Re-score a saved draft (lint + measured features + embeddings + judge)")
+  .requiredOption("--run <id>", "run id")
+  .option("--version <n>", "iteration version", "1")
+  .action(async (opts: { run: string; version: string }) => {
+    printEvaluation(await evaluateIteration(opts.run, Number(opts.version)));
+  });
+
 program
   .command("generate")
   .description("Generate an article from a brief JSON file (retrieve → plan → write → lint → repair)")
@@ -205,6 +229,7 @@ program
       console.log(`${t}s  ${e.stage.padEnd(8)} ${e.status}${e.detail ? `  ${e.detail}` : ""}`);
     });
     const { lint, outline } = result;
+    printEvaluation(result.evaluation);
     console.log(`\n"${outline.title}"`);
     console.log(`${lint.metrics.words} words (target ${result.brief.targetWords}) · ${lint.metrics.h2Count} H2 · ${lint.metrics.faqQuestions} FAQ questions${result.repaired ? " · repaired once" : ""}`);
     for (const issue of lint.issues) console.log(`  ${issue.severity === "hard" ? "✗" : "·"} [${issue.code}] ${issue.message}`);

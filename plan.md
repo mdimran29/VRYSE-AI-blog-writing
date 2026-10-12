@@ -12,7 +12,7 @@ Reference documents: [ARCHITECTURE.md](ARCHITECTURE.md) · [README.md](README.md
 
 ## Overview
 
-**Progress (2026-10-12):** ✅ Step 0 · ✅ Step 1 · ✅ Step 2 · ✅ Step 3 · ✅ Step 4 · ✅ Step 5 · ✅ Step 6 · ⏭ next: Step 7. **Client: Routematic.** VRYSE confirmed that any client's articles may be used, and the Protecto docs were access-restricted (see Step 2).
+**Progress (2026-10-12):** ✅ Step 0 · ✅ Step 1 · ✅ Step 2 · ✅ Step 3 · ✅ Step 4 · ✅ Step 5 · ✅ Step 6 · ✅ Step 7 · ⏭ next: Step 8. **Client: Routematic.** VRYSE confirmed that any client's articles may be used, and the Protecto docs were access-restricted (see Step 2).
 
 | Day | Focus | Milestone at end of day |
 |---|---|---|
@@ -150,20 +150,30 @@ Reference documents: [ARCHITECTURE.md](ARCHITECTURE.md) · [README.md](README.md
 
 **Done when** the generated article reads like a Routematic post. ✅ All three briefs produced articles in the house shape: intro ending in "what this article covers" → Key Takeaways → keyword-led H2s with H3s → conclusion → a 5-question FAQ last, with British spelling. The one specific statistic used (2.3 million EV sales and 29,000 chargers) comes from the reference articles, and no URLs were invented. Each article took 26–40 s and cost $0.007–0.03. The figure check found a weakness the evaluator must cover: unsourced planning numbers ("a 15–30% range buffer", "70–85% occupancy") get through when the same number appears elsewhere in the corpus.
 
-### Step 7 — Evaluator (3 h)
+### Step 7 — Evaluator (3 h) ✅
 
-- [ ] `src/lib/schemas/evaluation.ts`: `JudgeResult`, `DimensionScore` and `Evaluation`.
-- [ ] `src/lib/evaluation/deterministic.ts`: band scoring (ARCHITECTURE.md §3.5), with per-feature scores rolled up into dimensions.
-- [ ] `src/lib/evaluation/judge.ts`: a judge-model call (Gemini 2.5 Flash) with an anchored 1–5 rubric for each dimension. Each score needs at least one evidence quote. Run at temperature 0, and hide the version label. It also returns:
-  - coverage of each key point (covered / partial / missing, with a quote);
-  - generic passages;
-  - strengths, weaknesses and recommendations, each with a target.
-- [ ] `src/lib/evaluation/scoring.ts`: combine the scores per dimension, apply the weights to get the overall score, and apply the required-section cap.
-- [ ] Run the deterministic part and the judge **in parallel** with `Promise.all`.
-- [ ] `src/lib/evaluation/pairwise.ts`: a comparison of version A and version B with their order randomised. It returns the winner, a confidence and the reasons.
-- [ ] Vitest for band scoring, weighting and the cap. These are pure functions, so they're quick to test.
+- [x] `src/lib/schemas/evaluation.ts`: the 7 dimensions and weights, `JudgeSchema` (per-dimension score, reason and quoted evidence; key-point coverage; generic passages; **unsupported claims**; strengths; ranked weaknesses with a fix and target), `PairwiseSchema` and `Evaluation`.
+- [x] `src/lib/evaluation/bands.ts`: `bandScore` gives 100 inside p10–p90 and falls linearly to 0 at one IQR outside, optionally one-sided. `lengthScore` gives 100 within ±10% and 0 at ±50%. `judgeToScore` maps 1–5 onto 0–100.
+- [x] `src/lib/evaluation/measured.ts` (planned as `deterministic.ts`): the code-measured half of each dimension.
+  - Structure: H2s, H3s per H2, intro and closing length, FAQ size, FAQ present, FAQ last.
+  - Style: 10 rhythm and formatting features, plus **embedding closeness to the company centroid**.
+  - Readability: reading grade and reading ease.
+  - Specificity: numbers per 1k words, minus 10 points per **unsupported figure**.
+  - Completeness: length and required sections.
+  - Relevance: brief similarity compared with the references.
+  - Any feature scoring below 60 becomes a measured weakness, with the house range and a fix.
+- [x] `src/lib/evaluation/semantic.ts`: each article's vector is the mean of its non-FAQ chunks. Style closeness is cosine to the centroid, scored against how close the 54 references are. Relevance scores 100 when the article is at least as close to the brief as the 90th-percentile reference, and 0 at the median.
+- [x] `src/lib/evaluation/judge.ts` + `src/lib/prompts/judge.md`: Gemini 2.5 Flash with an **anchored rubric** (what a 1, 3 and 5 look like for each dimension), the source passages the writer saw (to check claims), temperature 0, no version label, and **never cached**, so re-judging is a real call. Key-point coverage counts only the brief's own key points; the judge sometimes added required sections.
+- [x] `comparePair` + `src/lib/prompts/pairwise.md` (planned as `pairwise.ts`): A/B order randomised and mapped back to first/second. It's ready for Step 9.
+- [x] `src/lib/evaluation/scoring.ts`: blends the parts (judge share 0.5, completeness 0.6, tone 1.0), weights them into the overall score, caps it at 70 if a required section or the FAQ is missing, and rescales the weights if the judge fails.
+- [x] `src/lib/evaluation/evaluate.ts`: lint, features, embeddings and the judge, with the embeddings and the judge **run in parallel**. Weaknesses from the judge, measurements and lint are merged and ranked by severity. If the judge fails, the measured scores are still returned.
+- [x] The pipeline now evaluates every new draft (stage `evaluate`), saves it to the `evaluations` table and `data/runs/<id>/v1.eval.json`, and records the writer's excerpt ids so a later re-evaluation uses the same sources.
+- [x] `pnpm vryse evaluate --run <id> [--version n]` (planned as `--iteration`). `generate` prints the scores too.
+- [x] Vitest: band, length and judge mapping, the combine/cap/fallback logic, measured scores and weaknesses, embedding geometry, judge and pairwise prompts (including the A/B mapping), and evaluation with the judge failing. 135 tests in total.
 
-**Done when** `pnpm vryse evaluate --iteration <id>` produces a full report.
+**Done when** `pnpm vryse evaluate` produces a full report. ✅ EV article: **78.4/100**. Structure 88, style 54, relevance 100, completeness 100, tone 50, readability 88, specificity 63. Measured weaknesses: paragraphs average 14 words (house 25–49), 93% one-sentence paragraphs (house 10–60%), 41 bold phrases per 1k words (house 3–17), no links (house 2.8–6.3). The judge's main criticism was claims without sourced evidence, with 7 quoted. Cost is about $0.027 per evaluation, mostly the judge's thinking tokens.
+
+> ⚠ **Judge noise is larger than the plan assumed.** Re-judging the *same* article gave 84.7 instead of 78.4: tone went from 3/5 to 5/5 and specificity from 2/5 to 3/5, while the measured parts didn't change. The plan assumed about ±3. **Step 8 must measure this properly**, and the improvement verdict will probably need the mean of several judge runs.
 
 ### Step 8 — Calibration and noise (1.5 h)
 

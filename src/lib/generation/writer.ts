@@ -4,7 +4,7 @@ import type { Excerpts } from "@/lib/retrieval/search";
 import type { Issue, Outline, ResolvedBrief } from "@/lib/schemas/generation";
 import type { CompanyStyleProfile } from "@/lib/schemas/profile";
 import { briefText } from "./planner";
-import { loadPrompt } from "./prompts";
+import { loadPrompt } from "@/lib/prompts";
 import { renderStyleGuide } from "./style-guide";
 
 type ModelOverride = { model?: string | LanguageModel };

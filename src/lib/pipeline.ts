@@ -5,7 +5,8 @@ import { eq, sql } from "drizzle-orm";
 import { loadProfile } from "@/lib/analysis/profile";
 import { getConfig } from "@/lib/config";
 import { getDb } from "@/lib/db/client";
-import { iterations, llmCalls, memory, runs } from "@/lib/db/schema";
+import { evaluations, iterations, llmCalls, memory, runs } from "@/lib/db/schema";
+import { evaluateArticle, type EvaluationResult } from "@/lib/evaluation/evaluate";
 import { buildCorpusFingerprint, lintArticle, type CorpusFingerprint, type LintResult } from "@/lib/generation/lint";
 import { planOutline, type Exemplar } from "@/lib/generation/planner";
 import { resolveBrief } from "@/lib/generation/style-guide";
@@ -14,7 +15,7 @@ import { selectExcerpts, type Excerpts } from "@/lib/retrieval/search";
 import { loadIndex, type RetrievalIndex } from "@/lib/retrieval/store";
 import type { BriefInput, Outline, ResolvedBrief } from "@/lib/schemas/generation";
 
-export type Stage = "retrieve" | "plan" | "write" | "lint" | "repair" | "save";
+export type Stage = "retrieve" | "plan" | "write" | "lint" | "repair" | "evaluate" | "save";
 export type GenerationEvent = { stage: Stage; status: "start" | "done"; detail?: string };
 
 export type GenerationResult = {
@@ -26,8 +27,9 @@ export type GenerationResult = {
   lint: LintResult;
   repaired: boolean;
   excerpts: Excerpts;
+  evaluation: EvaluationResult;
   costUsd: number;
-  files: { markdown: string; outline: string; lint: string };
+  files: { markdown: string; outline: string; lint: string; evaluation: string };
 };
 
 const fingerprints = new Map<string, CorpusFingerprint>();
@@ -54,6 +56,36 @@ export function companyMemory(company: string): string[] {
 }
 
 const hardCount = (l: LintResult) => l.issues.filter((i) => i.severity === "hard").length;
+
+/** The passages the writer was shown: the only acceptable support for figures, for the judge. */
+export const excerptChunks = (e: Excerpts) => [e.intro, ...e.body, e.conclusion].filter((c) => c !== null);
+
+export function saveEvaluation(iterationId: string, evaluation: EvaluationResult) {
+  const { dimensions, lint: _lint, ...report } = evaluation; // eslint-disable-line @typescript-eslint/no-unused-vars
+  getDb()
+    .insert(evaluations)
+    .values({ id: randomUUID(), iterationId, overall: evaluation.overall, dimensions, report, judgeModel: evaluation.judge.model })
+    .run();
+}
+
+/** Re-scores a saved iteration, using the same source passages the writer was given. */
+export async function evaluateIteration(runId: string, version = 1): Promise<EvaluationResult> {
+  const db = getDb();
+  const run = db.select().from(runs).where(eq(runs.id, runId)).get();
+  if (!run) throw new Error(`No run ${runId}`);
+  const iteration = db.select().from(iterations).where(eq(iterations.runId, runId)).all().find((i) => i.version === version);
+  if (!iteration) throw new Error(`Run ${runId} has no version ${version}`);
+  const profile = loadProfile(run.company);
+  const index = loadIndex(run.company);
+  const brief = run.brief as ResolvedBrief;
+  const meta = path.resolve(getConfig().VRYSE_DATA_DIR, "runs", runId, "v1.outline.json");
+  const chunkIds: string[] = fs.existsSync(meta) ? (JSON.parse(fs.readFileSync(meta, "utf8")).excerpts?.chunkIds ?? []) : [];
+  const sources = index.chunks.filter((c) => chunkIds.includes(c.id)).map(({ vector: _v, embedText: _t, ...c }) => c); // eslint-disable-line @typescript-eslint/no-unused-vars
+  const evaluation = await evaluateArticle({ markdown: iteration.markdown, brief, profile, index, sources, fingerprint: fingerprintFor(index), runId, iterationId: iteration.id });
+  saveEvaluation(iteration.id, evaluation);
+  fs.writeFileSync(path.resolve(getConfig().VRYSE_DATA_DIR, "runs", runId, `v${version}.eval.json`), JSON.stringify(evaluation, null, 2));
+  return evaluation;
+}
 
 /** Brief → retrieve → plan → retrieve per section → write → lint → (repair once) → save as iteration 1. */
 export async function runGeneration(input: BriefInput, onEvent: (e: GenerationEvent) => void = () => {}): Promise<GenerationResult> {
@@ -102,17 +134,32 @@ export async function runGeneration(input: BriefInput, onEvent: (e: GenerationEv
       onEvent({ stage: "repair", status: "done", detail: repaired ? `${hardCount(lint)} hard issue(s) left` : "kept the original draft" });
     }
 
-    onEvent({ stage: "save", status: "start" });
     const iterationId = randomUUID();
     db.insert(iterations).values({ id: iterationId, runId, version: 1, mode: "generate", outline: plan.outline, markdown }).run();
-    db.update(runs).set({ status: "drafted" }).where(eq(runs.id, runId)).run();
+
+    onEvent({ stage: "evaluate", status: "start" });
+    const evaluation = await evaluateArticle({ markdown, brief, profile, index, sources: excerptChunks(excerpts), fingerprint, runId, iterationId });
+    onEvent({ stage: "evaluate", status: "done", detail: `overall ${evaluation.overall.toFixed(1)}${evaluation.judge.available ? "" : " (judge unavailable)"}` });
+
+    onEvent({ stage: "save", status: "start" });
+    saveEvaluation(iterationId, evaluation);
+    db.update(runs).set({ status: "evaluated" }).where(eq(runs.id, runId)).run();
 
     const dir = path.resolve(getConfig().VRYSE_DATA_DIR, "runs", runId);
     fs.mkdirSync(dir, { recursive: true });
-    const files = { markdown: path.join(dir, "v1.md"), outline: path.join(dir, "v1.outline.json"), lint: path.join(dir, "v1.lint.json") };
+    const files = {
+      markdown: path.join(dir, "v1.md"),
+      outline: path.join(dir, "v1.outline.json"),
+      lint: path.join(dir, "v1.lint.json"),
+      evaluation: path.join(dir, "v1.eval.json"),
+    };
     fs.writeFileSync(files.markdown, markdown);
-    fs.writeFileSync(files.outline, JSON.stringify({ brief, outline: plan.outline, planIssues: plan.issues, excerpts: { articles: excerpts.articles, tokens: excerpts.tokens } }, null, 2));
+    fs.writeFileSync(
+      files.outline,
+      JSON.stringify({ brief, outline: plan.outline, planIssues: plan.issues, excerpts: { articles: excerpts.articles, tokens: excerpts.tokens, chunkIds: excerptChunks(excerpts).map((c) => c.id) } }, null, 2),
+    );
     fs.writeFileSync(files.lint, JSON.stringify({ repaired, ...lint }, null, 2));
+    fs.writeFileSync(files.evaluation, JSON.stringify(evaluation, null, 2));
     onEvent({ stage: "save", status: "done", detail: path.relative(process.cwd(), files.markdown) });
 
     const [{ cost }] = db
@@ -121,7 +168,7 @@ export async function runGeneration(input: BriefInput, onEvent: (e: GenerationEv
       .where(eq(llmCalls.runId, runId))
       .all();
 
-    return { runId, iterationId, brief, outline: plan.outline, markdown, lint, repaired, excerpts, costUsd: cost, files };
+    return { runId, iterationId, brief, outline: plan.outline, markdown, lint, repaired, excerpts, evaluation, costUsd: cost, files };
   } catch (error) {
     db.update(runs).set({ status: "failed" }).where(eq(runs.id, runId)).run();
     throw error;
