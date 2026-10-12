@@ -99,5 +99,6 @@ export type Evaluation = {
   strengths: string[];
   weaknesses: Weakness[];
   summary: string;
-  judge: { model: string; available: boolean; runs: number; error?: string };
+  /** Judge settings are recorded so a before/after comparison can insist on identical settings. */
+  judge: { model: string; available: boolean; runs: number; thinkingBudget: number | null; error?: string };
 };

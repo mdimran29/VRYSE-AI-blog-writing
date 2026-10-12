@@ -12,7 +12,7 @@ Reference documents: [ARCHITECTURE.md](ARCHITECTURE.md) · [README.md](README.md
 
 ## Overview
 
-**Progress (2026-10-12):** ✅ Step 0 · ✅ Step 1 · ✅ Step 2 · ✅ Step 3 · ✅ Step 4 · ✅ Step 5 · ✅ Step 6 · ✅ Step 7 · ✅ Step 8 · ⏭ next: Step 9. **Client: Routematic.** VRYSE confirmed that any client's articles may be used, and the Protecto docs were access-restricted (see Step 2).
+**Progress (2026-10-12):** ✅ Step 0 · ✅ Step 1 · ✅ Step 2 · ✅ Step 3 · ✅ Step 4 · ✅ Step 5 · ✅ Step 6 · ✅ Step 7 · ✅ Step 8 · ✅ Step 9 · ⏭ next: Step 10. **Client: Routematic.** VRYSE confirmed that any client's articles may be used, and the Protecto docs were access-restricted (see Step 2).
 
 | Day | Focus | Milestone at end of day |
 |---|---|---|
@@ -186,7 +186,7 @@ Reference documents: [ARCHITECTURE.md](ARCHITECTURE.md) · [README.md](README.md
   | Mistral Large 3 | 0.6 | Rejected: lenient (specificity 5/5 despite quoted unsupported claims) |
 
   - New settings: `VRYSE_JUDGE_THINKING_BUDGET=0` and `VRYSE_JUDGE_RUNS=3`. Scores are averaged by `averageJudges`; the quotes and weaknesses come from the run closest to the mean.
-  - **Threshold = 2·√2·σ/√k = 2.7, so 3 points** (`VRYSE_IMPROVEMENT_THRESHOLD`). Data: `data/calibration/noise.json`.
+  - **Threshold = 2·√2·σ/√k, rounded up to a half point: 3 points with 3 judge runs, 5 with 1** (σ is `VRYSE_JUDGE_SIGMA` = 1.63; computed by `thresholdFor`). Data: `data/calibration/noise.json`.
 - [x] **Calibration:** `pnpm vryse calibrate --company routematic` scores three sets on the same 6 briefs. Each brief comes from a held-out article (`briefFromArticle`: title, 4 body headings, its length).
   1. the held-out human articles, scored with `trustFigures`, because their statistics come from the authors' research and not from our sources;
   2. a generic baseline: the same writer model and brief, with **no profile, examples or rules** (`writeGenericBaseline`);
@@ -201,18 +201,28 @@ Reference documents: [ARCHITECTURE.md](ARCHITECTURE.md) · [README.md](README.md
 
 ## Day 3 — Feedback loop, UI, demo
 
-### Step 9 — Feedback compiler, reviser and memory (2.5 h)
+### Step 9 — Feedback compiler, reviser and memory (2.5 h) ✅
 
-- [ ] `src/lib/schemas/instruction.ts`: the `RevisionInstruction` schema (ARCHITECTURE.md §3.6).
-- [ ] `src/lib/feedback/compile.ts`: takes the human feedback (rating, free text and optional section notes) and the evaluator recommendations the reviewer ticked. An analysis-model call returns `RevisionInstruction[]`, and each instruction carries an `acceptanceCheck`.
-- [ ] `src/lib/generation/reviser.ts`: takes the previous draft and the instructions and returns the new draft. **Sections that no instruction targets must stay the same.** Check this afterwards by diffing the untouched sections.
-- [ ] A "Regenerate from outline" mode for structural feedback: rerun the planner with the instructions added, then rerun the writer.
-- [ ] `src/lib/evaluation/verify.ts`: the judge checks each `acceptanceCheck` against the new draft and returns ✓ or ✗ with evidence.
-- [ ] `improvementVerdict(prevEval, newEval, verification)` returns Improved, Mixed or Regressed, using the rules in ARCHITECTURE.md §3.5.
-- [ ] `src/lib/feedback/memory.ts`: instructions marked `persist` go into the memory table and are added to the planner and writer prompts.
-- [ ] `src/lib/pipeline.ts`: `runRevision(iterationId, instructions, mode, onEvent)`.
+- [x] `src/lib/schemas/feedback.ts` (planned as `instruction.ts`): `FeedbackInput`, `RevisionInstruction` (id, scope, target, action, instruction, **acceptanceCheck**, source, persist), `CompiledFeedback`, `Verification` and `Verdict`.
+- [x] `src/lib/feedback/compile.ts` + `prompts/compile-feedback.md`: rating, free text, section notes and **ticked evaluator weaknesses** become numbered instructions (Gemini Flash-Lite, about $0.0004). `selectWeaknesses` resolves ticked numbers against **the list the reviewer was shown**. Code enforces that **only the editor's own instructions can be saved to memory**.
+- [x] `src/lib/generation/reviser.ts` + `prompts/revise.md`: a targeted edit of the previous draft, using the same sources and allowed URLs. `sectionChanges` and `untargetedChanges` compare the drafts section by section and warn when a section changed without an instruction (the check is skipped for global instructions).
+- [x] "Regenerate" mode (`--mode regenerate`): re-plans with the instructions added to the brief's notes, then re-writes.
+- [x] `src/lib/evaluation/verify.ts` + `prompts/verify.md`: the judge checks each acceptance check (✓/✗ with a quote). Instructions it skips count as not addressed.
+- [x] `src/lib/evaluation/verdict.ts`: `improvementVerdict` returns improved, mixed or regressed. **The threshold is derived from the judge runs actually used** (`thresholdFor(σ, k)`: 5 points with 1 run, 3 with 3), so a development run can't claim a real improvement that's really noise. The pairwise result is shown alongside.
+- [x] `src/lib/feedback/memory.ts`: remember (deduplicated), list and forget. Saved preferences go into the planner, writer and reviser prompts.
+- [x] `src/lib/pipeline.ts`: `runRevision` runs compile → revise or regenerate → lint (one repair) → **evaluate, verify and pairwise in parallel** → verdict → save. It writes `v{n}.md`, `v{n}.eval.json` and `v{n}.revision.json`. If the previous version was judged with **different judge settings**, it is re-scored first, so the comparison is like for like.
+- [x] CLI: `vryse revise --run <id> --feedback "…" [--rating n] [--weaknesses 1,3] [--mode regenerate]`, `vryse weaknesses --run <id>` (no AI call), and `vryse memory --company <c> [--forget id]`.
+- [x] Vitest: the verdict rules (including the stricter threshold for fewer runs), section changes, compile (prompt, renumbering, persistence rule), weakness selection, revise, verify (skipped means not addressed) and memory. 164 tests in total.
 
-**Done when** one full CLI cycle (generate → evaluate → feedback → revise → re-evaluate) produces a verdict and the ✓/✗ checklist.
+**Done when** one full CLI cycle produces a verdict and the ✓/✗ checklist. ✅ EV article, 1 judge run: 5 instructions, 5/5 addressed. Overall 78.4 → 81.3 (**+2.9, under the 5-point threshold**), structure −12.5, and the pairwise judge preferred the revision (4/5). Verdict **MIXED**. The cycle cost $0.05, including re-scoring v1 under the new judge settings and one repair.
+
+Problems this live cycle exposed, all fixed and tested:
+1. Ticked weakness numbers were looked up in the *re-scored* list, so "links" was dropped. They now resolve against the list the reviewer saw.
+2. The compile model saved an evaluator finding as a permanent preference. Code now restricts memory to the editor's instructions, and the wrong entry was deleted.
+3. The revision labelled unsupported claims as "(Routematic internal data)". The writer and reviser prompts now forbid labelling anything as company data unless a source does.
+4. Links came out as bare URLs. The prompts now require `[text](url)`.
+
+Fixes 3 and 4 are prompt changes; they'll be confirmed by the Step 11 demo run rather than an extra paid run now.
 
 ### Step 10 — Next.js UI (3.5 h)
 

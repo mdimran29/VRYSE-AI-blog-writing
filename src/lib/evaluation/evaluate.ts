@@ -179,6 +179,7 @@ export async function evaluateArticle(
       model: typeof opts.judgeModel === "string" || !opts.judgeModel ? (opts.judgeModel as string | undefined) ?? getConfig().VRYSE_JUDGE_MODEL : "custom",
       available: Boolean(judge),
       runs: judged.runs,
+      thinkingBudget: getConfig().VRYSE_JUDGE_THINKING_BUDGET ?? null,
       error: judged.error,
     },
     lint,

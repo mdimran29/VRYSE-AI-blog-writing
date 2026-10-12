@@ -12,7 +12,8 @@ import { buildProfile } from "@/lib/analysis/profile";
 import { buildIndex, loadIndex } from "@/lib/retrieval/store";
 import { search, selectExcerpts } from "@/lib/retrieval/search";
 import type { ChunkRole } from "@/lib/retrieval/chunks";
-import { evaluateIteration, loadIterationContext, runGeneration } from "@/lib/pipeline";
+import { evaluateIteration, latestEvaluation, loadIterationContext, runGeneration, runRevision } from "@/lib/pipeline";
+import { forget, listMemory } from "@/lib/feedback/memory";
 import { improvementThreshold, measureNoise } from "@/lib/evaluation/noise";
 import { runCalibration } from "@/lib/evaluation/calibrate";
 import type { EvaluationResult } from "@/lib/evaluation/evaluate";
@@ -205,8 +206,8 @@ function printEvaluation(e: EvaluationResult) {
   }
   if (e.keyPoints.length) console.log(`Key points: ${e.keyPoints.map((k) => `${k.status === "covered" ? "✓" : k.status === "partial" ? "~" : "✗"} ${k.point}`).join(" · ")}`);
   if (e.summary) console.log(`Judge: ${e.summary}`);
-  console.log("Top weaknesses:");
-  for (const w of e.weaknesses.slice(0, 6)) console.log(`  [${w.severity}/${w.source}] ${w.issue}${w.recommendation ? ` → ${w.recommendation}` : ""}`);
+  console.log(`Top weaknesses (${e.weaknesses.length} in total; see all with \`vryse weaknesses --run <id>\`):`);
+  e.weaknesses.slice(0, 6).forEach((w, i) => console.log(`  ${i + 1}. [${w.severity}/${w.source}] ${w.issue}${w.recommendation ? ` → ${w.recommendation}` : ""}`));
   if (e.unsupportedClaims.length) console.log(`Unsupported claims (judge): ${e.unsupportedClaims.map((c) => `"${c.quote.slice(0, 80)}"`).join(" · ")}`);
 }
 
@@ -217,6 +218,66 @@ program
   .option("--version <n>", "iteration version", "1")
   .action(async (opts: { run: string; version: string }) => {
     printEvaluation(await evaluateIteration(opts.run, Number(opts.version)));
+  });
+
+program
+  .command("weaknesses")
+  .description("List the numbered weaknesses of a saved draft's latest evaluation (no AI call)")
+  .requiredOption("--run <id>", "run id")
+  .option("--version <n>", "iteration version (default: latest)")
+  .action((opts: { run: string; version?: string }) => {
+    const ctx = loadIterationContext(opts.run, opts.version ? Number(opts.version) : undefined);
+    const e = latestEvaluation(ctx.iteration.id);
+    if (!e) return program.error("This version has no evaluation yet. Run `vryse evaluate` first.");
+    console.log(`v${ctx.iteration.version} · overall ${e.overall.toFixed(1)}`);
+    e.weaknesses.forEach((w, i) => console.log(`${String(i + 1).padStart(3)}. [${w.severity}/${w.source}] ${w.issue}${w.recommendation ? `\n       → ${w.recommendation}` : ""}`));
+  });
+
+program
+  .command("revise")
+  .description("One feedback cycle: compile feedback → revise → lint → evaluate + verify + compare → verdict")
+  .requiredOption("--run <id>", "run id")
+  .option("--feedback <text>", "free-text feedback", "")
+  .option("--rating <n>", "your rating, 1–5")
+  .option("--weaknesses <list>", "numbers of evaluator weaknesses you agree with, e.g. 1,3,4")
+  .option("--from <version>", "version to revise (default: latest)")
+  .option("--mode <mode>", "revise (targeted edit) or regenerate (re-plan)", "revise")
+  .action(async (opts: { run: string; feedback: string; rating?: string; weaknesses?: string; from?: string; mode: string }) => {
+    if (!opts.feedback.trim() && !opts.weaknesses) program.error("Give --feedback and/or --weaknesses.");
+    const started = Date.now();
+    const r = await runRevision(
+      {
+        runId: opts.run,
+        fromVersion: opts.from ? Number(opts.from) : undefined,
+        mode: opts.mode === "regenerate" ? "regenerate" : "revise",
+        feedback: { text: opts.feedback, rating: opts.rating ? Number(opts.rating) : undefined, selectedWeaknesses: opts.weaknesses?.split(",").map((n) => Number(n.trim())).filter(Boolean) },
+      },
+      (e) => console.log(`${((Date.now() - started) / 1000).toFixed(1).padStart(5)}s  ${e.stage.padEnd(8)} ${e.status}${e.detail ? `  ${e.detail}` : ""}`),
+    );
+    console.log("\nInstructions:");
+    for (const i of r.instructions) {
+      const v = r.verification.find((x) => x.id === i.id);
+      console.log(`  ${v?.addressed ? "✓" : "✗"} ${i.id} [${i.target}] ${i.instruction}${i.persist ? "  (saved to memory)" : ""}\n      ${v?.evidence ?? ""}`);
+    }
+    console.log(`Sections: ${r.changes.map((c) => `${c.section}: ${c.status}`).join(" · ")}`);
+    if (r.untargeted.length) console.log(`⚠ Changed without an instruction: ${r.untargeted.join(", ")}`);
+    printEvaluation(r.evaluation);
+    console.log(`\nVERDICT v${r.previous.version} → v${r.version}: ${r.verdict.verdict.toUpperCase()}`);
+    for (const reason of r.verdict.reasons) console.log(`  - ${reason}`);
+    if (r.verdict.pairwise) for (const reason of r.verdict.pairwise.reasons) console.log(`    · ${reason}`);
+    console.log(`Cycle cost $${r.costUsd.toFixed(4)} · saved ${path.relative(process.cwd(), r.files.markdown)}`);
+  });
+
+program
+  .command("memory")
+  .description("List (or delete) the standing preferences saved from feedback")
+  .requiredOption("--company <slug>", "company slug")
+  .option("--forget <id>", "delete one entry")
+  .action((opts: { company: string; forget?: string }) => {
+    if (opts.forget) forget(opts.forget);
+    const items = listMemory(opts.company);
+    if (!items.length) console.log("No saved preferences.");
+    for (const m of items) console.log(`${m.id}  ${m.instruction}`);
   });
 
 program

@@ -11,7 +11,7 @@ import type { CompanyStyleProfile } from "@/lib/schemas/profile";
 
 type ModelOverride = { model?: string | LanguageModel };
 
-function judgeProviderOptions() {
+export function judgeProviderOptions() {
   const budget = getConfig().VRYSE_JUDGE_THINKING_BUDGET;
   return budget === undefined ? undefined : { google: { thinkingConfig: { thinkingBudget: budget } } };
 }

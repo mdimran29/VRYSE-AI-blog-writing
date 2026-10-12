@@ -1,6 +1,6 @@
 # What has been built so far — and what it actually does
 
-_Last updated: 2026-10-12, after Step 8 of [plan.md](../plan.md)._
+_Last updated: 2026-10-12, after Step 9 of [plan.md](../plan.md)._
 
 This document explains, in plain language, every part of the system that exists today: what was built, what it does when you run it, how to try it yourself, and what the results were. For the full design, see [ARCHITECTURE.md](../ARCHITECTURE.md).
 
@@ -24,7 +24,7 @@ You give the system a short **brief**, for example "an article about moving empl
  Brief ──► ⑤ Find similar passages ──► ⑥ Plan outline ──► Write ──► Check ──► (Fix once) ──► ⑦ Score ──► Saved article + scores
 ```
 
-**What is not built yet:** human feedback and improvement (Step 9) and the web interface (Step 10). Today everything runs from the command line.
+**What is not built yet:** the web interface (Step 10) and the final before/after demo (Step 11). Today everything runs from the command line.
 
 ---
 
@@ -274,12 +274,57 @@ Every score is now the **average of 3 judge runs**. From the measured spread, an
 
 ---
 
+### Step 9 — Feedback and improvement
+
+**Built:** the feedback loop (`src/lib/feedback/`, `reviser.ts`, `verify.ts`, `verdict.ts`, and `runRevision` in the pipeline).
+
+**What it actually does, in one cycle:**
+1. **You give feedback:** a rating, free text, and optionally the numbers of the weaknesses you agree with (`vryse weaknesses --run <id>` lists them for free).
+2. **The feedback becomes instructions.** A cheap model turns it into numbered, precise instructions. Each one says which section to change, what to do, and **how to check it was done**.
+   - Example. Your words: "the paragraphs are too choppy". The instruction: "Develop paragraphs to be 2–3 sentences long". The check: "no single-sentence paragraphs remain".
+3. **Memory:** a general rule from you ("never call anything a game-changer") is saved and applied to every future article. Only *your* rules can be saved, never the evaluator's.
+4. **The article is revised.** Only the sections an instruction targets may change, and the code checks this section by section. ("Regenerate" mode re-plans the whole article instead.)
+5. **Check and compare, at the same time:**
+   - the new version is scored;
+   - the judge checks each instruction: ✓ done or ✗ not done, with a quote;
+   - a separate judge compares old and new in random order and says which is better.
+6. **Verdict (code):** **IMPROVED** only if the score rose by more than the noise threshold, no dimension fell by more than 5, and at least 80% of instructions were done. **REGRESSED** if the score fell by the threshold. Otherwise **MIXED**. The threshold depends on the number of judge runs: 5 points with 1 run (development), 3 points with 3 runs (the demo).
+7. **Fair comparison:** if the old version was scored with different judge settings, it's re-scored first.
+
+**First real cycle (EV article):**
+
+| | v1 | v2 |
+|---|---|---|
+| Overall | 78.4 | 81.3 (+2.9) |
+| Instructions done | — | 5 of 5 ✓ |
+| Side-by-side judge | — | preferred v2 (4/5) |
+| **Verdict** | | **MIXED**: +2.9 is under the 5-point threshold, and structure fell 12.5 |
+
+That's an honest result. The revision did what was asked, and the comparison judge liked it, but the score gain is too small to be sure it isn't noise.
+
+**Problems this run revealed (all fixed):**
+1. The weaknesses you ticked were looked up in a re-scored list, so one got lost. They now come from the list you saw.
+2. An evaluator suggestion was wrongly saved as a permanent rule. The code now prevents that, and the wrong entry was removed.
+3. The revised article stamped "(Routematic internal data)" on claims with no source. The writer is now forbidden to do that.
+4. Links were written as plain URLs. Proper Markdown links are now required.
+
+**Cost:** about **$0.03–0.05 per cycle** with 1 judge run.
+
+**Try it:**
+```bash
+pnpm vryse weaknesses --run <run id>
+pnpm vryse revise --run <run id> --rating 3 --weaknesses 2,3 --feedback "The intro is too generic."
+pnpm vryse memory --company routematic
+```
+
+---
+
 ## 4. Money and time so far
 
 | Item | Amount |
 |---|---|
-| Total AI spend for all building and testing | **$1.08** |
-| Free credit left (of $5 per 30 days) | **about $3.92** |
+| Total AI spend for all building and testing | **$1.13** |
+| Free credit left (of $5 per 30 days) | **about $3.87** |
 | Cost of one fresh article, including its score (3 judge runs) | about **$0.05** |
 | Spending cap | **$3.00** total (`VRYSE_BUDGET_USD`) |
 | Time for one fresh article, including its score | about **2 minutes** |
@@ -289,7 +334,7 @@ Every score is now the **average of 3 judge runs**. From the measured spread, an
 ## 5. How to check that everything works
 
 ```bash
-pnpm test        # 146 automatic tests
+pnpm test        # 164 automatic tests
 pnpm typecheck   # TypeScript has no errors
 pnpm lint        # code style is clean
 pnpm vryse ping  # all three AI models answer
@@ -312,6 +357,5 @@ pnpm vryse ping  # all three AI models answer
 
 | Step | What it will add |
 |---|---|
-| 9 — Feedback loop | A person's feedback becomes clear instructions, the article is revised, and the system checks each instruction was followed |
 | 10 — Web interface | The whole flow in a browser: brief → article → scores → feedback → improved article → side-by-side comparison |
 | 11–12 | The before/after demo and the final README |

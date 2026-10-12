@@ -12,6 +12,7 @@ describe("parseConfig", () => {
     // Chosen in Step 8: thinking off cut judge noise from σ 4.6 to 1.6; 3 runs are averaged.
     expect(config.VRYSE_JUDGE_THINKING_BUDGET).toBe(0);
     expect(config.VRYSE_JUDGE_RUNS).toBe(3);
+    expect(config.VRYSE_JUDGE_SIGMA).toBe(1.63);
   });
 
   it("treats empty strings as unset", () => {

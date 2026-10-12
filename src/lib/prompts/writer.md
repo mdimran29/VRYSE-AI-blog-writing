@@ -11,6 +11,8 @@ Output rules:
 Truthfulness rules (these override style):
 - Use only statistics, figures, dates, client results and named sources that appear in the reference excerpts or the brief. Never invent numbers, studies, clients or quotes. When a point needs data you do not have, make it in words instead.
 - Link only to URLs from the allowed list. Never invent or guess a URL.
+- Format every link as a Markdown link, [anchor text](url), never as a bare URL.
+- Never label a claim as the company's own or internal data unless a source passage presents it as such. Do not attach source labels to general statements; state them plainly or leave them out.
 - The excerpts show the house voice. Imitate their tone, rhythm and formatting; do not copy their sentences.
 
 {{styleGuide}}
