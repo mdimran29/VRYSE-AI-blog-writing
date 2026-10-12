@@ -28,7 +28,7 @@ The system learns a company's blog style from its existing human-written article
 11. [Known limitations](#11-known-limitations)
 12. [Future improvements](#12-future-improvements)
 
-Further reading: [ARCHITECTURE.md](ARCHITECTURE.md) (components, data flow, formulas), [plan.md](plan.md) (the build log, step by step, with every problem found and how it was fixed), [docs/PROGRESS.md](docs/PROGRESS.md) (a plain-language walkthrough).
+Further reading: [ARCHITECTURE.md](ARCHITECTURE.md) (components, data flow, formulas), [plan.md](plan.md) (the build log, step by step, with every problem found and how it was fixed), [docs/PROGRESS.md](docs/PROGRESS.md) (a plain-language walkthrough), and [docs/assignment-brief.md](docs/assignment-brief.md) (the original assignment).
 
 ---
 
@@ -62,7 +62,7 @@ A fixed pipeline, not autonomous agents: the order of steps never changes, so a 
 
 ```text
 .
-├── README.md · ARCHITECTURE.md · plan.md · docs/PROGRESS.md · docs/images/
+├── README.md · ARCHITECTURE.md · plan.md · docs/ (PROGRESS.md, assignment-brief.md, images/)
 ├── scripts/cli.ts                    # `pnpm vryse …` (all pipeline commands)
 ├── src/
 │   ├── app/                          # Next.js App Router: pages + streaming API routes
