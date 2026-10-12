@@ -9,7 +9,7 @@ import { BlockSchema, type Block } from "@/lib/schemas/article";
 import { z } from "zod";
 import { findAiIsms } from "./ai-isms";
 import { aggregate, type Distributions } from "./aggregate";
-import { extractFeatures, type Features } from "./metrics";
+import { extractFeatures, sectionOrder, type Features, type SectionOrder } from "./metrics";
 import { signatureTerms, type Term } from "./terms";
 
 export type CorpusStats = {
@@ -21,6 +21,7 @@ export type CorpusStats = {
   signatureTerms: Term[];
   /** How many reference articles use each AI-ism; a phrase common in the corpus is part of the house style. */
   aiIsms: { phrase: string; articles: number; total: number }[];
+  sectionOrder: SectionOrder;
   builtAt: string;
 };
 
@@ -62,13 +63,15 @@ export function buildCorpusStats(company: string, brandTerms: string[]): CorpusS
     articleIds: docs.map((d) => d.id),
     distributions: aggregate(perArticle.map((p) => p.features)),
     signatureTerms: signatureTerms(texts, 40),
+    sectionOrder: sectionOrder(docs.map((d) => d.blocks)),
     aiIsms: [...aiIsmTotals.entries()].map(([phrase, v]) => ({ phrase, ...v })).sort((a, b) => b.articles - a.articles),
     builtAt: new Date().toISOString(),
     perArticle,
   };
 }
 
-export function saveCorpusStats(stats: CorpusStats): string {
+export function saveCorpusStats(input: CorpusStats & { perArticle?: unknown }): string {
+  const { perArticle: _perArticle, ...stats } = input; // eslint-disable-line @typescript-eslint/no-unused-vars
   const file = path.resolve(getConfig().VRYSE_DATA_DIR, "profiles", `${stats.company}.stats.json`);
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, JSON.stringify(stats, null, 2));

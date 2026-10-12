@@ -12,7 +12,7 @@ Reference documents: [ARCHITECTURE.md](ARCHITECTURE.md) · [README.md](README.md
 
 ## Overview
 
-**Progress (2026-10-12):** ✅ Step 0 · ✅ Step 1 · ✅ Step 2 · ✅ Step 3 · ⏭ next: Step 4. **Client: Routematic.** VRYSE confirmed that any client's articles may be used, and the Protecto docs were access-restricted (see Step 2).
+**Progress (2026-10-12):** ✅ Step 0 · ✅ Step 1 · ✅ Step 2 · ✅ Step 3 · ✅ Step 4 · ✅ Step 5 · ⏭ next: Step 6. **Client: Routematic.** VRYSE confirmed that any client's articles may be used, and the Protecto docs were access-restricted (see Step 2).
 
 | Day | Focus | Milestone at end of day |
 |---|---|---|
@@ -96,32 +96,41 @@ Reference documents: [ARCHITECTURE.md](ARCHITECTURE.md) · [README.md](README.md
 
 **Done when** `pnpm vryse profile stats --company routematic` prints a sensible table. ✅ On Routematic (54 training articles): median 1,468 words, 7 H2s, about 33 words per paragraph and 15 per sentence, FK grade 13.9. FAQ in 100%, conclusion heading in 63%, key takeaways in 28%. AI-isms are rare in the human writing ("seamless" appears in 8 of 54 articles), which makes them a useful signal for spotting generic AI output. 
 
-### Step 4 — LLM extraction and profile synthesis (2 h)
+### Step 4 — LLM extraction and profile synthesis (2 h) ✅
 
-- [ ] `src/lib/schemas/profile.ts`: Zod schemas for `ArticleTraits` and `CompanyStyleProfile`, following ARCHITECTURE.md §3.2B and §3.2C.
-- [ ] `src/lib/analysis/extract.ts`: one analysis-model call (Gemini 2.5 Flash-Lite) per article that returns `ArticleTraits`. Calls run concurrently through the shared limiter and are cached by content hash. This costs about $0.04 for 70 articles.
-- [ ] `src/lib/analysis/profile.ts`:
-  - The numeric bands come straight from Step 3.
-  - Qualitative fields come from **one** writer-model call that consolidates all the traits. It must report how often each pattern occurs and must output **do and don't rules**.
-  - Write the result to `data/profiles/routematic.json`, with a version number and provenance, and also save it to the `profiles` table.
-- [ ] Read the profile yourself. Is it specific to Routematic, or could it describe any B2B blog? Tighten the consolidation prompt until it's specific.
+- [x] `src/lib/schemas/profile.ts`: Zod schemas for `ArticleTraits` (13 fields), `StyleGuide` (voice, structure with counted intro/conclusion/CTA patterns, content, vocabulary, formatting, do/don't rules) and the `CompanyStyleProfile` type. **Every field is required**, because OpenAI's strict structured output rejects schemas with optional fields (the first synthesis run failed on exactly this).
+- [x] `src/lib/analysis/extract.ts`: `extractTraits`, one Gemini 2.5 Flash-Lite call per article at temperature 0, run concurrently through the shared limiter. It's **always cached** (keyed by article and prompt), so rebuilding the profile only pays for synthesis.
+- [x] `synthesizeGuide`: one GPT-5 mini call over all 54 trait sets plus a compact stats summary. It counts how many articles show each pattern and outputs concrete do/don't rules.
+- [x] `src/lib/analysis/profile.ts` + `pnpm vryse profile build --company <c> --brand <names>`:
+  - Numeric bands come straight from Step 3.
+  - **Section order is measured in code** (`sectionOrder` in `metrics.ts`): where Key Takeaways, the Conclusion and the FAQ sit. The first synthesis got the outline order wrong, putting Key Takeaways and the FAQ before the Conclusion. With the measured order in the prompt, it now matches the corpus.
+  - `avoidPhrases` is deterministic: known AI-isms that appear in fewer than 10% of the human articles. "seamless" (15%) is kept as part of the house style.
+  - Writes `data/profiles/<c>.json` (versioned, with corpus provenance and model names) and a row in the `profiles` table. The per-article traits go to the git-ignored `data/processed/<c>/traits.json`, because they paraphrase client content.
+- [x] Read the profile. It's specific to Routematic: Indian/British spelling and ₹, intros of about 120–140 words that end with "what this article covers", internal metrics labelled as such, external statistics hyperlinked, FAQ always last, CTAs only at the end (21/54 articles have one, 32 have none).
+- [x] Vitest: `avoidPhrases`, `statsDigest`, `sectionOrder`, and mock-model tests that check the article text and every trait set reach the prompts. 70 tests in total.
 
-**Done when** the profile is committed and you would accept it as a style guide for a human writer. ✅ **Day 1 milestone.**
+**Done when** the profile is committed and you would accept it as a style guide for a human writer. ✅ **Day 1 milestone.** Profile v2, 54/54 articles analysed, about $0.03 per build (the second build reused the cached traits).
 
 ---
 
 ## Day 2 — Generation and evaluation
 
-### Step 5 — Retrieval (1 h)
+### Step 5 — Retrieval (1 h) ✅
 
-- [ ] `src/lib/retrieval/embed.ts`: a lazy singleton `pipeline('feature-extraction', 'Xenova/bge-small-en-v1.5')` from `@huggingface/transformers`, with mean pooling and normalisation.
-- [ ] `src/lib/retrieval/index.ts`: embed each article's title plus its first paragraph, and each H2 section separately. Save to `data/index/routematic.json`. `pnpm vryse profile build` also builds the index.
-- [ ] `src/lib/retrieval/bm25.ts`: a minimal BM25 of about 50 lines.
-- [ ] `search(query, k)`: cosine similarity combined with a BM25 score (weighted 0.8 / 0.2).
-- [ ] `selectExcerpts(brief, outline?)` returns at most one intro, one conclusion and two body sections, capped at about 2.5k tokens.
-- [ ] A quick check: three different topic queries return results that look sensible.
+- [x] `src/lib/retrieval/embed.ts`: a lazy singleton `feature-extraction` pipeline (`Xenova/bge-small-en-v1.5`, transformers.js 4.3, fp32), run locally and free. It uses **CLS pooling and the BGE query instruction prefix**, as the model card recommends (not mean pooling). The model downloads once (about 128 MB) into the git-ignored `data/.models/`.
+- [x] `src/lib/retrieval/chunks.ts`: each article becomes an intro chunk plus one chunk per H2, tagged `intro | takeaways | body | conclusion | faq`. An FAQ at any heading level gets its own chunk, and the last content section becomes the conclusion when none is named. The text that gets embedded is title + heading + the first 300 words (BGE's input limit).
+- [x] `src/lib/retrieval/store.ts` (planned as `index.ts`): `buildIndex` embeds the **train split only** (held-out test articles are never retrievable) and saves `data/index/<c>.json`, with vectors as base64 Float32. The file is git-ignored because it contains client text. `pnpm vryse profile build` also rebuilds the index.
+- [x] `src/lib/retrieval/bm25.ts`: Okapi BM25 (k1 = 1.2, b = 0.75) with stopwords removed.
+- [x] `src/lib/retrieval/search.ts`: `search` combines cosine and BM25, each **min-max normalised per query**, weighted **0.7 / 0.3**. The weight was chosen by measurement: at 0.8 / 0.2 a keyword query ("monsoon flooding rerouting") put the only two sections that mention monsoons at #9 and #11. At 0.7 the first one is #2, and three semantic briefs still put a relevant section first. 0.6 and below started to hurt the semantic briefs.
+- [x] `selectExcerpts` returns the intro of the top article, the conclusion of the best-ranked article that has one, and two body sections **from different articles** (by outline heading when an outline exists). The `faq` and `takeaways` roles are never used as body excerpts. The total is capped at 2,500 tokens, truncating at block boundaries.
+- [x] CLI: `pnpm vryse index build`, `pnpm vryse search --query … [--roles …]`, `pnpm vryse excerpts --topic … --points "a|b"`.
+- [x] Vitest: chunk roles (including a nested FAQ and an implicit conclusion), BM25 (idf, length normalisation, stopwords), hybrid normalisation, truncation, and `selectExcerpts` on a hand-built index (diversity, role exclusions, conclusion fallback, token budget). 86 tests in total.
+- [x] Quick check with three briefs on topics no single article covers:
+  - **EV fleet:** a sustainable-commuting intro and conclusion, plus ESG and sustainability sections.
+  - **Women's night-shift safety:** the night-shift article, plus a women's-safety compliance section from a different article.
+  - **Monsoon disruption:** the only two sections in the corpus that mention monsoons or flooding.
 
-**Done when** the excerpts for a test brief are clearly on-topic.
+**Done when** the excerpts for a test brief are clearly on-topic. ✅ Index: 457 chunks from 54 training articles, built in about 60 s on CPU, $0. Excerpt sets use about 800–1,000 of the 2,500-token budget.
 
 ### Step 6 — Planner and writer (2.5 h)
 

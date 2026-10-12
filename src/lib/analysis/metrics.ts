@@ -52,9 +52,9 @@ export type Features = {
   aiIsmsPer1k: number;
 };
 
-const FAQ = /\b(faqs?|frequently asked)\b/i;
-const KEY_TAKEAWAYS = /\b(key takeaways?|tl;?dr|at a glance|quick summary|in brief)\b/i;
-const CONCLUSION = /\b(conclusion|final thoughts|wrapping up|the bottom line|summing up|in summary)\b/i;
+export const FAQ = /\b(faqs?|frequently asked)\b/i;
+export const KEY_TAKEAWAYS = /\b(key takeaways?|tl;?dr|at a glance|quick summary|in brief)\b/i;
+export const CONCLUSION = /\b(conclusion|final thoughts|wrapping up|the bottom line|summing up|in summary)\b/i;
 const CTA = /\b(contact|book a demo|request a demo|get in touch|talk to|reach out|schedule|sign up|get started|try|learn more|explore)\b/i;
 const SECOND_PERSON = new Set(["you", "your", "yours", "yourself", "yourselves"]);
 const FIRST_PLURAL = new Set(["we", "our", "ours", "us", "ourselves"]);
@@ -208,4 +208,44 @@ export function extractFeatures(blocks: Block[], opts: { brandTerms: string[] })
     boldPer1k: per1k(raw.match(/\*\*[^*]+\*\*/g)?.length ?? 0),
     aiIsmsPer1k: per1k(findAiIsms(plainBody).reduce((n, h) => n + h.count, 0)),
   };
+}
+
+export type SectionOrder = {
+  articles: number;
+  keyTakeaways: { articles: number; firstSection: number };
+  faq: { articles: number; lastSection: number };
+  conclusion: { articles: number; beforeFaq: number; afterFaq: number };
+};
+
+/** Where the recurring sections sit across a corpus, measured rather than left to the LLM to infer. */
+export function sectionOrder(docs: Block[][]): SectionOrder {
+  const out: SectionOrder = {
+    articles: docs.length,
+    keyTakeaways: { articles: 0, firstSection: 0 },
+    faq: { articles: 0, lastSection: 0 },
+    conclusion: { articles: 0, beforeFaq: 0, afterFaq: 0 },
+  };
+  for (const blocks of docs) {
+    const headings = blocks.filter((b): b is Extract<Block, { type: "heading" }> => b.type === "heading" && b.level >= 2);
+    const h2s = headings.filter((h) => h.level === 2);
+    const kt = h2s.findIndex((h) => KEY_TAKEAWAYS.test(h.text));
+    if (kt >= 0) {
+      out.keyTakeaways.articles++;
+      if (kt === 0) out.keyTakeaways.firstSection++;
+    }
+    const faq = headings.findIndex((h) => FAQ.test(h.text));
+    if (faq >= 0) {
+      out.faq.articles++;
+      if (headings.slice(faq + 1).every((h) => h.level > headings[faq].level)) out.faq.lastSection++;
+    }
+    const conclusion = headings.findIndex((h) => CONCLUSION.test(h.text));
+    if (conclusion >= 0) {
+      out.conclusion.articles++;
+      if (faq >= 0) {
+        if (conclusion < faq) out.conclusion.beforeFaq++;
+        else out.conclusion.afterFaq++;
+      }
+    }
+  }
+  return out;
 }

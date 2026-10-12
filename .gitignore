@@ -44,6 +44,7 @@ next-env.d.ts
 # vryse data
 /data/raw/
 /data/processed/
+/data/index/
 /data/*.db
 /data/*.db-*
 /data/.llm-cache/

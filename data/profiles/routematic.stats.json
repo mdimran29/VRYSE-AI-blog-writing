@@ -609,6 +609,22 @@
       "score": 4.414887906237972
     }
   ],
+  "sectionOrder": {
+    "articles": 54,
+    "keyTakeaways": {
+      "articles": 15,
+      "firstSection": 11
+    },
+    "faq": {
+      "articles": 54,
+      "lastSection": 51
+    },
+    "conclusion": {
+      "articles": 34,
+      "beforeFaq": 34,
+      "afterFaq": 0
+    }
+  },
   "aiIsms": [
     {
       "phrase": "seamless",
@@ -641,5 +657,5 @@
       "total": 1
     }
   ],
-  "builtAt": "2026-10-11T22:24:05.085Z"
+  "builtAt": "2026-10-12T06:34:43.527Z"
 }

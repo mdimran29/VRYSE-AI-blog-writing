@@ -1,6 +1,6 @@
 // Common English words that carry no company signal. Not exhaustive: a term must also recur across
 // many articles to rank, which filters most remaining generic words.
-const STOPWORDS = new Set(
+export const STOPWORDS = new Set(
   `a about above after again against all also am an and any are as at be because been before being below between both but by
   can could did do does doing down during each either else even every few for from further get gets getting go goes had has have
   having he her here hers herself him himself his how however i if in into is it its itself just let like make makes many may
@@ -12,7 +12,7 @@ const STOPWORDS = new Set(
   often across along already always among become becomes better best help helps make making takes take right good`.split(/\s+/),
 );
 
-const tokenize = (text: string) => text.toLowerCase().match(/[a-z][a-z'-]*[a-z]|[a-z]/g) ?? [];
+export const tokenize = (text: string) => text.toLowerCase().match(/[a-z][a-z'-]*[a-z]|[a-z]/g) ?? [];
 
 export type Term = { term: string; docFrequency: number; count: number; score: number };
 

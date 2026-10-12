@@ -31,3 +31,5 @@ const COMPILED = AI_ISMS.map(({ phrase, pattern }) => ({ phrase, regex: new RegE
 export function findAiIsms(text: string): { phrase: string; count: number }[] {
   return COMPILED.map(({ phrase, regex }) => ({ phrase, count: text.match(regex)?.length ?? 0 })).filter((h) => h.count > 0);
 }
+
+export const AI_ISM_PHRASES = AI_ISMS.map((a) => a.phrase);

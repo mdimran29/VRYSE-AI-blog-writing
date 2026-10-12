@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { extractFeatures } from "@/lib/analysis/metrics";
+import { extractFeatures, sectionOrder } from "@/lib/analysis/metrics";
 import type { Block } from "@/lib/schemas/article";
 
 // A small article whose numbers can be checked by hand.
@@ -92,5 +92,24 @@ describe("extractFeatures", () => {
     expect(f.brandMentionsPer1k).toBeCloseTo(per1k(3)); // Acme in body text, table cell and conclusion; link URLs don't count
     expect(f.linksPer1k).toBeCloseTo(per1k(1));
     expect(f.boldPer1k).toBeCloseTo(per1k(1));
+  });
+});
+
+describe("sectionOrder", () => {
+  const h2 = (text: string): Block => ({ type: "heading", level: 2, text });
+  const p: Block = { type: "paragraph", text: "Body." };
+  const docs: Block[][] = [
+    [p, h2("Key Takeaways"), p, h2("Why It Matters"), p, h2("Conclusion"), p, h2("FAQs"), p],
+    [p, h2("What Is X"), p, h2("Key Takeaways"), p, h2("Final Thoughts"), p, h2("FAQs"), p],
+    [p, h2("What Is Y"), p, h2("FAQs"), p, h2("Conclusion"), p],
+  ];
+
+  it("measures where key takeaways, conclusion and FAQ sit", () => {
+    expect(sectionOrder(docs)).toEqual({
+      articles: 3,
+      keyTakeaways: { articles: 2, firstSection: 1 },
+      faq: { articles: 3, lastSection: 2 },
+      conclusion: { articles: 3, beforeFaq: 2, afterFaq: 1 },
+    });
   });
 });

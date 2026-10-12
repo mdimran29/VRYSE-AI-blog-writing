@@ -8,6 +8,10 @@ import { getConfig } from "@/lib/config";
 import { getDb } from "@/lib/db/client";
 import { ingestDirectory } from "@/lib/ingest/ingest";
 import { buildCorpusStats, saveCorpusStats } from "@/lib/analysis/stats";
+import { buildProfile } from "@/lib/analysis/profile";
+import { buildIndex, loadIndex } from "@/lib/retrieval/store";
+import { search, selectExcerpts } from "@/lib/retrieval/search";
+import type { ChunkRole } from "@/lib/retrieval/chunks";
 import { llmCalls } from "@/lib/db/schema";
 import { callObject, type LlmRole } from "@/lib/llm/call";
 import { parseModelString } from "@/lib/llm/models";
@@ -106,6 +110,85 @@ profile
     console.log(`\nSignature terms: ${stats.signatureTerms.slice(0, 25).map((t) => t.term).join(", ")}`);
     console.log(`AI-isms in the human corpus: ${stats.aiIsms.map((a) => `${a.phrase} (${a.articles}/${stats.articleCount})`).join(", ") || "none"}`);
     console.log(`\nSaved ${path.relative(process.cwd(), file)} (${perArticle.length} articles measured)`);
+  });
+
+profile
+  .command("build")
+  .description("Build the full style profile: statistics + per-article LLM analysis + synthesis → data/profiles/<company>.json")
+  .requiredOption("--company <slug>", "company slug, e.g. routematic")
+  .option("--brand <names>", "comma-separated brand/product names to count (default: the company slug)")
+  .action(async (opts: { company: string; brand?: string }) => {
+    const brandTerms = (opts.brand ?? opts.company).split(",").map((s) => s.trim()).filter(Boolean);
+    const { profile: p, file, costUsd, failures } = await buildProfile({
+      company: opts.company,
+      brandTerms,
+      onProgress: ({ done, total, failed }) => process.stdout.write(`\rAnalysing articles: ${done}/${total}${failed ? ` (${failed} failed)` : ""}`),
+    });
+    process.stdout.write("\n");
+    for (const f of failures) console.warn(`  ✗ ${f.id}: ${f.error}`);
+    const g = p.guide;
+    console.log(`\nProfile v${p.version} for ${p.company} — ${p.corpus.extractedArticles}/${p.corpus.articleCount} articles analysed`);
+    console.log(`Summary: ${g.summary}`);
+    console.log(`Tone: ${g.voice.tone.join(", ")} · POV: ${g.voice.pointOfView}`);
+    console.log(`Typical outline: ${g.structure.typicalOutline.join(" → ")}`);
+    console.log(`Intro patterns: ${g.structure.introPatterns.map((x) => `${x.pattern} (${x.articles})`).join(" | ")}`);
+    console.log(`Rules: ${g.rules.do.length} do, ${g.rules.dont.length} don't · avoid phrases: ${p.avoidPhrases.length}`);
+    console.log(`Saved ${path.relative(process.cwd(), file)} · cost $${costUsd.toFixed(4)}`);
+
+    const index = await buildIndex(opts.company);
+    console.log(`Retrieval index: ${index.chunks.length} chunks (${index.model}, local, $0)`);
+  });
+
+const indexCmd = program.command("index").description("Retrieval index of reference article sections");
+
+indexCmd
+  .command("build")
+  .description("Chunk and embed the training articles locally → data/index/<company>.json")
+  .requiredOption("--company <slug>", "company slug")
+  .action(async (opts: { company: string }) => {
+    const started = Date.now();
+    const index = await buildIndex(opts.company);
+    const roles = index.chunks.reduce<Record<string, number>>((acc, c) => ({ ...acc, [c.role]: (acc[c.role] ?? 0) + 1 }), {});
+    console.log(`${index.chunks.length} chunks · ${index.dims} dims · ${index.model} · ${((Date.now() - started) / 1000).toFixed(1)} s`);
+    console.log(`By role: ${Object.entries(roles).map(([r, n]) => `${r} ${n}`).join(" · ")}`);
+  });
+
+program
+  .command("search")
+  .description("Hybrid (embedding + BM25) search over reference sections")
+  .requiredOption("--company <slug>", "company slug")
+  .requiredOption("--query <text>", "free-text query")
+  .option("--roles <roles>", "comma-separated roles: intro,takeaways,body,conclusion,faq")
+  .option("-k <n>", "results", "5")
+  .action(async (opts: { company: string; query: string; roles?: string; k: string }) => {
+    const roles = opts.roles?.split(",").map((r) => r.trim() as ChunkRole);
+    const results = await search(loadIndex(opts.company), opts.query, { roles, k: Number(opts.k) });
+    for (const { chunk, score } of results) {
+      console.log(`${score.toFixed(3)}  [${chunk.role}] ${chunk.articleTitle} › ${chunk.heading ?? "(intro)"}  (${chunk.words} words)`);
+    }
+  });
+
+program
+  .command("excerpts")
+  .description("Show the voice exemplars the writer would get for a brief")
+  .requiredOption("--company <slug>", "company slug")
+  .requiredOption("--topic <text>", "article topic")
+  .option("--points <list>", "key points, separated by |")
+  .option("--max-tokens <n>", "excerpt budget", "2500")
+  .action(async (opts: { company: string; topic: string; points?: string; maxTokens: string }) => {
+    const ex = await selectExcerpts(
+      loadIndex(opts.company),
+      { topic: opts.topic, keyPoints: opts.points?.split("|").map((s) => s.trim()) },
+      { maxTokens: Number(opts.maxTokens) },
+    );
+    console.log("Closest articles:");
+    for (const a of ex.articles) console.log(`  ${a.score.toFixed(3)}  ${a.title}`);
+    const show = (label: string, c: { articleTitle: string; heading: string | null; words: number } | null) =>
+      console.log(`${label.padEnd(11)} ${c ? `${c.articleTitle} › ${c.heading ?? "(intro)"} (${c.words} words)` : "—"}`);
+    show("Intro:", ex.intro);
+    show("Conclusion:", ex.conclusion);
+    ex.body.forEach((c, i) => show(`Body ${i + 1}:`, c));
+    console.log(`Excerpt budget used: ~${ex.tokens}/${opts.maxTokens} tokens`);
   });
 
 program
