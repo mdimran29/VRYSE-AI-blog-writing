@@ -1,5 +1,6 @@
 import path from "node:path";
 import { generateText, NoObjectGeneratedError, Output, type LanguageModel } from "ai";
+import { sql } from "drizzle-orm";
 import pLimit from "p-limit";
 import { z } from "zod";
 import { getConfig } from "@/lib/config";
@@ -29,6 +30,8 @@ export type CallOptions = {
   iterationId?: string;
   /** Use the dev response cache (defaults to VRYSE_DEV_CACHE). */
   cache?: boolean;
+  /** Provider-specific options, e.g. { google: { thinkingConfig: { thinkingBudget: 0 } } }. */
+  providerOptions?: Record<string, Record<string, unknown>>;
 };
 
 export type CallMeta = {
@@ -85,6 +88,15 @@ function logCall(opts: CallOptions, model: string, entry: {
     .run();
 }
 
+/** Throws before a paid call if the logged spend has reached VRYSE_BUDGET_USD. Cached answers are exempt. */
+function assertWithinBudget() {
+  const budget = getConfig().VRYSE_BUDGET_USD;
+  const [{ spent }] = getDb().select({ spent: sql<number>`coalesce(sum(${llmCalls.costUsd}), 0)` }).from(llmCalls).all();
+  if (spent >= budget) {
+    throw new Error(`Budget reached: $${spent.toFixed(2)} of $${budget.toFixed(2)} spent. Raise VRYSE_BUDGET_USD in .env.local to continue.`);
+  }
+}
+
 function costFrom(model: string, usage: Usage, providerMetadata: unknown): number | null {
   // Prefer the cost the gateway reports; fall back to list prices.
   const gateway = (providerMetadata as { gateway?: Record<string, unknown> } | undefined)?.gateway;
@@ -106,6 +118,7 @@ async function invoke<T>(opts: CallOptions, schema: z.ZodType<T> | undefined): P
     schema: schema ? z.toJSONSchema(schema) : null,
     temperature: opts.temperature,
     maxOutputTokens: opts.maxOutputTokens,
+    providerOptions: opts.providerOptions,
   });
 
   if (useCache) {
@@ -117,6 +130,7 @@ async function invoke<T>(opts: CallOptions, schema: z.ZodType<T> | undefined): P
     }
   }
 
+  assertWithinBudget();
   const model = typeof configured === "string" ? await resolveModel(configured) : configured;
 
   const attempt = async (prompt: string) => {
@@ -133,6 +147,8 @@ async function invoke<T>(opts: CallOptions, schema: z.ZodType<T> | undefined): P
         temperature: opts.temperature,
         maxOutputTokens: opts.maxOutputTokens,
         maxRetries: 4,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        providerOptions: opts.providerOptions as any,
       };
       const result = schema
         ? await generateText({ ...request, output: Output.object({ schema }) })

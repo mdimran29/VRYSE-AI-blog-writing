@@ -167,7 +167,7 @@ Evaluation is a hybrid. Each dimension gets a 0–100 score, plus evidence and s
 
 **Band scoring for deterministic features.** If the value falls inside the profile's p10–p90 band, the score is 100. Outside it, the score decays linearly and reaches 0 at a distance of one IQR beyond the band. Each feature's score is averaged into its dimension.
 
-**LLM judge.** The judge comes from a different model *family* from the writer (Gemini judging GPT), which reduces self-preference bias. It works from an anchored 1–5 rubric per dimension and must quote evidence for every score. It runs at temperature 0, and the version label is hidden from it. Its 1–5 score maps to 0–100. Each dimension combines the two parts: `dimension = 0.5 × deterministic + 0.5 × judge`. Tone uses the judge alone.
+**LLM judge.** The judge comes from a different model *family* from the writer (Gemini judging GPT), which reduces self-preference bias. It works from an anchored 1–5 rubric per dimension and must quote evidence for every score. It runs at temperature 0 **with thinking turned off** (the main source of variance), is never answered from the dev cache, and is averaged over 3 runs; and the version label is hidden from it. Its 1–5 score maps to 0–100. Each dimension combines the two parts: `dimension = 0.5 × deterministic + 0.5 × judge`. Tone uses the judge alone.
 
 **Overall score.** The weighted sum of the dimensions. A missing required section caps the overall score at 70.
 
@@ -177,7 +177,7 @@ Evaluation is a hybrid. Each dimension gets a 0–100 score, plus evidence and s
 
 **Improvement verdict.** An iteration counts as **Improved** only when all three conditions hold:
 
-1. The overall score rises by at least the **noise threshold**. The threshold is measured empirically by running the judge 3× on the same article (target: about +3 points).
+1. The overall score rises by at least the **noise threshold: 3 points**. Measured by scoring the same draft 5 times (Step 8). With thinking on, Gemini 2.5 Flash had σ 4.6–5.5. With thinking off, σ was 1.6 and 0.0 on two articles. Each score is the mean of **3 judge runs**, so the threshold is 2·√2·1.63/√3 = 2.7, rounded up to 3. Mistral Large 3 was steadier (σ 0.6) but rejected as lenient. Data: `data/calibration/noise.json`.
 2. No dimension drops by more than 5 points.
 3. At least 80% of the revision instructions are verified as addressed.
 

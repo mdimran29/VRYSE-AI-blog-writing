@@ -12,7 +12,9 @@ import { buildProfile } from "@/lib/analysis/profile";
 import { buildIndex, loadIndex } from "@/lib/retrieval/store";
 import { search, selectExcerpts } from "@/lib/retrieval/search";
 import type { ChunkRole } from "@/lib/retrieval/chunks";
-import { evaluateIteration, runGeneration } from "@/lib/pipeline";
+import { evaluateIteration, loadIterationContext, runGeneration } from "@/lib/pipeline";
+import { improvementThreshold, measureNoise } from "@/lib/evaluation/noise";
+import { runCalibration } from "@/lib/evaluation/calibrate";
 import type { EvaluationResult } from "@/lib/evaluation/evaluate";
 import fs from "node:fs";
 import { llmCalls } from "@/lib/db/schema";
@@ -215,6 +217,41 @@ program
   .option("--version <n>", "iteration version", "1")
   .action(async (opts: { run: string; version: string }) => {
     printEvaluation(await evaluateIteration(opts.run, Number(opts.version)));
+  });
+
+program
+  .command("noise")
+  .description("Score one saved draft several times to measure judge noise (scores are not saved)")
+  .requiredOption("--run <id>", "run id")
+  .option("--version <n>", "iteration version", "1")
+  .option("--times <n>", "number of independent scorings", "5")
+  .action(async (opts: { run: string; version: string; times: string }) => {
+    const ctx = loadIterationContext(opts.run, Number(opts.version));
+    const report = await measureNoise(
+      { markdown: ctx.iteration.markdown, brief: ctx.brief, profile: ctx.profile, index: ctx.index, sources: ctx.sources, fingerprint: ctx.fingerprint, runId: opts.run },
+      Number(opts.version),
+      Number(opts.times),
+    );
+    const o = report.overall;
+    console.log(`Overall: ${o.values.map((v) => v.toFixed(1)).join(", ")} → mean ${o.mean.toFixed(1)}, σ ${o.std.toFixed(2)}, range ${o.range.toFixed(1)}`);
+    for (const [d, v] of Object.entries(report.dimensions)) console.log(`  ${d.padEnd(13)} σ ${v.std.toFixed(1).padStart(5)}   ${v.values.map((x) => x.toFixed(0)).join(", ")}`);
+    console.log(`Measured parts identical across runs: ${report.measuredIdentical ? "yes" : "NO"}`);
+    for (const k of [1, 2, 3]) console.log(`Improvement threshold with ${k} judge run(s) per score: ${improvementThreshold(o.std, k).toFixed(1)} points`);
+  });
+
+program
+  .command("calibrate")
+  .description("Score held-out human articles, a generic baseline and the system on the same briefs")
+  .requiredOption("--company <slug>", "company slug")
+  .option("--limit <n>", "number of held-out articles")
+  .action(async (opts: { company: string; limit?: string }) => {
+    const { summary, file } = await runCalibration(opts.company, { limit: opts.limit ? Number(opts.limit) : undefined, onProgress: (m) => console.log(`  ${m}`) });
+    const dims = Object.keys(summary.sets.human.dimensions);
+    console.log(`\n| Set | n | Overall | ${dims.join(" | ")} |\n|---|---|---|${dims.map(() => "---").join("|")}|`);
+    for (const [set, s] of Object.entries(summary.sets)) {
+      console.log(`| ${set} | ${s.n} | ${s.overall.toFixed(1)} | ${dims.map((d) => s.dimensions[d as keyof typeof s.dimensions].toFixed(0)).join(" | ")} |`);
+    }
+    console.log(`\nOrdering: ${JSON.stringify(summary.ordering)}\nSaved ${path.relative(process.cwd(), file)}`);
   });
 
 program

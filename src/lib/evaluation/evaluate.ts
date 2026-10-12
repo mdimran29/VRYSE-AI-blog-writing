@@ -65,11 +65,32 @@ const briefKeyPoints = (judge: JudgeResult, brief: ResolvedBrief) =>
 function coverageScore(judge: JudgeResult, brief: ResolvedBrief): number {
   const points = briefKeyPoints(judge, brief);
   if (!brief.keyPoints.length || !points.length) return judgeToScore(judge.dimensions.completeness.score);
-  const value = { covered: 1, partial: 0.5, missing: 0 } as const;
-  return (100 * points.reduce((s, k) => s + value[k.status], 0)) / points.length;
+  return (100 * points.reduce((s, k) => s + KEY_POINT_VALUE[k.status], 0)) / points.length;
 }
 
 export type EvaluationResult = Evaluation & { lint: LintResult };
+
+const KEY_POINT_VALUE: Record<"covered" | "partial" | "missing", number> = { covered: 1, partial: 0.5, missing: 0 };
+const meanJudgeScore = (j: JudgeResult) => DIMENSIONS.reduce((s, d) => s + j.dimensions[d].score, 0) / DIMENSIONS.length;
+
+/**
+ * Averages several judge runs: dimension scores and key-point coverage are averaged; the quotes,
+ * weaknesses and summary come from the run closest to the average (a real, coherent run).
+ */
+export function averageJudges(runs: JudgeResult[]): JudgeResult {
+  if (runs.length === 1) return runs[0];
+  const target = runs.reduce((s, r) => s + meanJudgeScore(r), 0) / runs.length;
+  const representative = runs.reduce((best, r) => (Math.abs(meanJudgeScore(r) - target) < Math.abs(meanJudgeScore(best) - target) ? r : best));
+  const dimensions = Object.fromEntries(
+    DIMENSIONS.map((d) => [d, { ...representative.dimensions[d], score: runs.reduce((s, r) => s + r.dimensions[d].score, 0) / runs.length }]),
+  ) as JudgeResult["dimensions"];
+  const keyPoints = representative.keyPoints.map((kp) => {
+    const values = runs.map((r) => r.keyPoints.find((k) => overlaps(k.point, kp.point))).filter((k) => k !== undefined).map((k) => KEY_POINT_VALUE[k.status]);
+    const mean = values.reduce((s, v) => s + v, 0) / values.length;
+    return { ...kp, status: mean >= 0.75 ? ("covered" as const) : mean >= 0.25 ? ("partial" as const) : ("missing" as const) };
+  });
+  return { ...representative, dimensions, keyPoints };
+}
 
 /** Scores one draft: lint, measured features, embedding signals and the judge, combined per dimension. */
 export async function evaluateArticle(
@@ -80,21 +101,40 @@ export async function evaluateArticle(
     index: RetrievalIndex;
     sources: Chunk[];
     fingerprint?: CorpusFingerprint;
+    /** Reference articles: their figures and links come from the author's research, not from our sources. */
+    trustFigures?: boolean;
     runId?: string;
     iterationId?: string;
   },
-  opts: { judgeModel?: string | LanguageModel; embedders?: Embedders } = {},
+  opts: { judgeModel?: string | LanguageModel; embedders?: Embedders; judgeRuns?: number } = {},
 ): Promise<EvaluationResult> {
   const { markdown, brief, profile, index } = input;
   const fingerprint = input.fingerprint ?? buildCorpusFingerprint(index.chunks.map((c) => c.markdown));
-  const lint = lintArticle(markdown, { brief, profile, fingerprint });
+  const rawLint = lintArticle(markdown, { brief, profile, fingerprint });
+  const lint: LintResult = input.trustFigures
+    ? {
+        issues: rawLint.issues.filter((i) => i.code !== "unsupported-figure" && i.code !== "unverified-url"),
+        metrics: { ...rawLint.metrics, unsupportedFigures: [], unverifiedUrls: [] },
+      }
+    : rawLint;
+  const judgeRuns = opts.judgeRuns ?? getConfig().VRYSE_JUDGE_RUNS;
   const features = extractFeatures(markdownToBlocks(markdown), { brandTerms: profile.brandTerms });
 
   const [semantic, judged] = await Promise.all([
     semanticSignals({ markdown, topic: brief.topic, keyPoints: brief.keyPoints }, index, opts.embedders),
-    judgeArticle({ markdown, brief, profile, sources: input.sources, runId: input.runId, iterationId: input.iterationId }, { model: opts.judgeModel })
-      .then((result) => ({ result, error: undefined }))
-      .catch((error: unknown) => ({ result: null, error: error instanceof Error ? error.message : String(error) })),
+    Promise.allSettled(
+      Array.from({ length: judgeRuns }, () =>
+        judgeArticle(
+          { markdown, brief, profile, sources: input.sources, trustFigures: input.trustFigures, runId: input.runId, iterationId: input.iterationId },
+          { model: opts.judgeModel },
+        ),
+      ),
+    ).then((settled) => {
+      const ok = settled.filter((s): s is PromiseFulfilledResult<JudgeResult> => s.status === "fulfilled").map((s) => s.value);
+      const failed = settled.find((s): s is PromiseRejectedResult => s.status === "rejected");
+      const error = failed ? (failed.reason instanceof Error ? failed.reason.message : String(failed.reason)) : undefined;
+      return { result: ok.length ? averageJudges(ok) : null, runs: ok.length, error };
+    }),
   ]);
   const judge = judged.result;
   const measured = measuredScores({ features, profile, brief, lint, semantic });
@@ -138,6 +178,7 @@ export async function evaluateArticle(
     judge: {
       model: typeof opts.judgeModel === "string" || !opts.judgeModel ? (opts.judgeModel as string | undefined) ?? getConfig().VRYSE_JUDGE_MODEL : "custom",
       available: Boolean(judge),
+      runs: judged.runs,
       error: judged.error,
     },
     lint,

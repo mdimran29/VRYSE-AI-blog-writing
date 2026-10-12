@@ -99,5 +99,5 @@ export type Evaluation = {
   strengths: string[];
   weaknesses: Weakness[];
   summary: string;
-  judge: { model: string; available: boolean; error?: string };
+  judge: { model: string; available: boolean; runs: number; error?: string };
 };

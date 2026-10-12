@@ -12,7 +12,7 @@ Reference documents: [ARCHITECTURE.md](ARCHITECTURE.md) · [README.md](README.md
 
 ## Overview
 
-**Progress (2026-10-12):** ✅ Step 0 · ✅ Step 1 · ✅ Step 2 · ✅ Step 3 · ✅ Step 4 · ✅ Step 5 · ✅ Step 6 · ✅ Step 7 · ⏭ next: Step 8. **Client: Routematic.** VRYSE confirmed that any client's articles may be used, and the Protecto docs were access-restricted (see Step 2).
+**Progress (2026-10-12):** ✅ Step 0 · ✅ Step 1 · ✅ Step 2 · ✅ Step 3 · ✅ Step 4 · ✅ Step 5 · ✅ Step 6 · ✅ Step 7 · ✅ Step 8 · ⏭ next: Step 9. **Client: Routematic.** VRYSE confirmed that any client's articles may be used, and the Protecto docs were access-restricted (see Step 2).
 
 | Day | Focus | Milestone at end of day |
 |---|---|---|
@@ -175,19 +175,27 @@ Reference documents: [ARCHITECTURE.md](ARCHITECTURE.md) · [README.md](README.md
 
 > ⚠ **Judge noise is larger than the plan assumed.** Re-judging the *same* article gave 84.7 instead of 78.4: tone went from 3/5 to 5/5 and specificity from 2/5 to 3/5, while the measured parts didn't change. The plan assumed about ±3. **Step 8 must measure this properly**, and the improvement verdict will probably need the mean of several judge runs.
 
-### Step 8 — Calibration and noise (1.5 h)
+### Step 8 — Calibration and noise (1.5 h) ✅
 
-This step is what makes the evaluation credible, so don't skip it. Use the same writer model you will use for the demo.
+- [x] **Noise:** `pnpm vryse noise --run <id> --times 5` scores one saved draft 5 times without saving the scores. The measured half was identical every time, so all the variance is the judge's.
 
-- [ ] **Noise:** run the judge 3 times on the same article and record the standard deviation of the overall score. Set the noise threshold to about 2σ, then put the value in the README and in the config.
-- [ ] **Calibration:** `pnpm vryse calibrate` scores three sets:
-  1. the held-out human articles;
-  2. generic baselines: the same topics written with **no profile and no retrieval**;
-  3. VRYSE v1 for the same topics.
-- [ ] The expected ordering is human ≥ VRYSE > generic. If generic scores close to human, the metrics don't discriminate, so fix the weights or the features before going further.
-- [ ] Fill in the calibration table in the README. Expected cost is about $1.40.
+  | Judge | σ (single run) | Decision |
+  |---|---|---|
+  | Gemini 2.5 Flash, thinking on | 4.6 / 5.5 | Too noisy (a +13 threshold) |
+  | **Gemini 2.5 Flash, thinking off** | **1.6 / 0.0** | **Chosen**: still critical, cheaper |
+  | Mistral Large 3 | 0.6 | Rejected: lenient (specificity 5/5 despite quoted unsupported claims) |
 
-**Done when** the evaluator clearly separates human from generic, and the table is in the README. ✅ **Day 2 milestone.**
+  - New settings: `VRYSE_JUDGE_THINKING_BUDGET=0` and `VRYSE_JUDGE_RUNS=3`. Scores are averaged by `averageJudges`; the quotes and weaknesses come from the run closest to the mean.
+  - **Threshold = 2·√2·σ/√k = 2.7, so 3 points** (`VRYSE_IMPROVEMENT_THRESHOLD`). Data: `data/calibration/noise.json`.
+- [x] **Calibration:** `pnpm vryse calibrate --company routematic` scores three sets on the same 6 briefs. Each brief comes from a held-out article (`briefFromArticle`: title, 4 body headings, its length).
+  1. the held-out human articles, scored with `trustFigures`, because their statistics come from the authors' research and not from our sources;
+  2. a generic baseline: the same writer model and brief, with **no profile, examples or rules** (`writeGenericBaseline`);
+  3. the full system (`runGeneration`).
+- [x] The ordering holds where it matters: **human 85.5 > generic 70.0** (77.0 uncapped: the generic articles never include the FAQ that every Routematic article has). **System 87.0 ≈ human**: the 1.5-point gap is inside the 3-point noise. Style still prefers the human articles (79 vs 70). Relevance and completeness saturate because the briefs come from the articles' own headings.
+- [x] README calibration table filled in, including uncapped scores and how to read them. Calibration cost $0.58.
+- [x] **Spending cap:** `VRYSE_BUDGET_USD` (default $3). `call.ts` refuses new model calls once the logged total reaches it; cached answers still work. Tested.
+
+**Done when** the evaluator clearly separates human from generic, and the table is in the README. ✅ Day 2 milestone. 146 tests in total.
 
 ---
 

@@ -1,6 +1,7 @@
 import type { LanguageModel } from "ai";
 import { renderStyleGuide } from "@/lib/generation/style-guide";
 import { briefText } from "@/lib/generation/planner";
+import { getConfig } from "@/lib/config";
 import { callObject } from "@/lib/llm/call";
 import { loadPrompt } from "@/lib/prompts";
 import type { Chunk } from "@/lib/retrieval/chunks";
@@ -10,14 +11,23 @@ import type { CompanyStyleProfile } from "@/lib/schemas/profile";
 
 type ModelOverride = { model?: string | LanguageModel };
 
-const sourcesBlock = (sources: Chunk[]) =>
-  sources.length
+function judgeProviderOptions() {
+  const budget = getConfig().VRYSE_JUDGE_THINKING_BUDGET;
+  return budget === undefined ? undefined : { google: { thinkingConfig: { thinkingBudget: budget } } };
+}
+
+const TRUSTED = "(This is a published reference article; its figures and sources come from the author's own research. Do not list them as unsupported claims.)";
+
+const sourcesBlock = (sources: Chunk[], trustFigures: boolean) =>
+  trustFigures
+    ? TRUSTED
+    : sources.length
     ? sources.map((c) => `<source title="${c.articleTitle} › ${c.heading ?? "intro"}">\n${c.markdown.trim()}\n</source>`).join("\n\n")
     : "(none — treat any specific figure or statistic as unsupported unless it is in the brief)";
 
 /** Absolute evaluation of one draft by the judge model (temperature 0, version label hidden). */
 export async function judgeArticle(
-  input: { markdown: string; brief: ResolvedBrief; profile: CompanyStyleProfile; sources: Chunk[]; runId?: string; iterationId?: string },
+  input: { markdown: string; brief: ResolvedBrief; profile: CompanyStyleProfile; sources: Chunk[]; trustFigures?: boolean; runId?: string; iterationId?: string },
   opts: ModelOverride = {},
 ): Promise<JudgeResult> {
   const { output } = await callObject({
@@ -29,9 +39,10 @@ export async function judgeArticle(
     temperature: 0,
     // Never cached: re-judging must be a real, independent call (Step 8 measures judge noise this way).
     cache: false,
+    providerOptions: judgeProviderOptions(),
     maxOutputTokens: 12000,
     instructions: loadPrompt("judge", { company: input.profile.company, styleGuide: renderStyleGuide(input.profile) }),
-    prompt: `Brief:\n${briefText(input.brief)}\n\nSource passages the writer was given (the only acceptable support for figures, besides the brief):\n${sourcesBlock(input.sources)}\n\nDraft article to evaluate:\n<article>\n${input.markdown.trim()}\n</article>`,
+    prompt: `Brief:\n${briefText(input.brief)}\n\nSource passages the writer was given (the only acceptable support for figures, besides the brief):\n${sourcesBlock(input.sources, input.trustFigures ?? false)}\n\nDraft article to evaluate:\n<article>\n${input.markdown.trim()}\n</article>`,
     schema: JudgeSchema,
   });
   return output;
@@ -57,6 +68,7 @@ export async function comparePair(
     temperature: 0,
     maxOutputTokens: 4000,
     cache: false,
+    providerOptions: judgeProviderOptions(),
     instructions: loadPrompt("pairwise", { company: input.profile.company, styleGuide: renderStyleGuide(input.profile) }),
     prompt: `Brief:\n${briefText(input.brief)}\n\n<draft id="A">\n${a.trim()}\n</draft>\n\n<draft id="B">\n${b.trim()}\n</draft>`,
     schema: PairwiseSchema,

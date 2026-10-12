@@ -1,6 +1,6 @@
 # What has been built so far — and what it actually does
 
-_Last updated: 2026-10-12, after Step 7 of [plan.md](../plan.md)._
+_Last updated: 2026-10-12, after Step 8 of [plan.md](../plan.md)._
 
 This document explains, in plain language, every part of the system that exists today: what was built, what it does when you run it, how to try it yourself, and what the results were. For the full design, see [ARCHITECTURE.md](../ARCHITECTURE.md).
 
@@ -24,7 +24,7 @@ You give the system a short **brief**, for example "an article about moving empl
  Brief ──► ⑤ Find similar passages ──► ⑥ Plan outline ──► Write ──► Check ──► (Fix once) ──► ⑦ Score ──► Saved article + scores
 ```
 
-**What is not built yet:** proving the scores are trustworthy (Step 8), human feedback and improvement (Step 9), and the web interface (Step 10). Today everything runs from the command line.
+**What is not built yet:** human feedback and improvement (Step 9) and the web interface (Step 10). Today everything runs from the command line.
 
 ---
 
@@ -237,13 +237,51 @@ The main weaknesses it found are real and fixable:
 
 ---
 
+### Step 8 — Proving the scores can be trusted
+
+**Built:** two tools, `pnpm vryse noise` and `pnpm vryse calibrate`, plus a spending cap.
+
+**What it actually does:**
+
+**1. Measuring the judge's noise.** It scores the same article 5 times. Any difference between the runs is noise, because the text didn't change.
+
+| Judge | Spread (σ) | Decision |
+|---|---|---|
+| Gemini, normal "thinking" | 4.6–5.5 points | Too noisy |
+| **Gemini, thinking turned off** | **1.6 and 0** | **Chosen**: still strict, much steadier, and cheaper |
+| Mistral | 0.6 | Rejected: steady but **too kind**, giving top marks even to weak parts |
+
+Every score is now the **average of 3 judge runs**. From the measured spread, an improvement counts as real only if the score rises by **at least 3 points**. Anything smaller could be luck.
+
+**2. Checking that the scores mean something.** The 6 Routematic articles the system never saw were each turned into a brief (their title, main headings and length). Three versions were scored on each brief:
+
+| Version | Score |
+|---|---|
+| The real Routematic article | **85.5** |
+| A generic AI article (same model, no Routematic knowledge) | **70.0** (77.0 before the missing-FAQ cap) |
+| This system's article | **87.0** |
+
+- The scorer clearly rates real Routematic writing above generic AI writing, so it measures something real.
+- The system scores about the same as the real articles. The 1.5-point difference is smaller than the noise, so it does **not** mean the system is better than a human.
+- Style still rates the real articles higher (79 vs 70).
+- Honest caveat: the system is guided by the same Routematic numbers it's scored on, so it's partly "writing to the test".
+
+**3. Protecting the credit.** A spending cap (`VRYSE_BUDGET_USD`, default $3) stops all new AI calls once the logged total reaches it. Answers saved in the cache still work, because they're free.
+
+**Cost of Step 8:** about $0.85, mostly the noise experiments (25 extra scorings) and the calibration ($0.58).
+
+**Try it:** `pnpm vryse noise --run <run id> --times 3` (about $0.03) · `pnpm vryse calibrate --company routematic` (about $0.60)
+
+---
+
 ## 4. Money and time so far
 
 | Item | Amount |
 |---|---|
-| Total AI spend for all building and testing | **$0.25** |
-| Free credit left (of $5 per 30 days) | **$4.75** |
-| Cost of one fresh article, including its score | about **$0.05** |
+| Total AI spend for all building and testing | **$1.08** |
+| Free credit left (of $5 per 30 days) | **about $3.92** |
+| Cost of one fresh article, including its score (3 judge runs) | about **$0.05** |
+| Spending cap | **$3.00** total (`VRYSE_BUDGET_USD`) |
 | Time for one fresh article, including its score | about **2 minutes** |
 
 ---
@@ -251,7 +289,7 @@ The main weaknesses it found are real and fixable:
 ## 5. How to check that everything works
 
 ```bash
-pnpm test        # 135 automatic tests
+pnpm test        # 146 automatic tests
 pnpm typecheck   # TypeScript has no errors
 pnpm lint        # code style is clean
 pnpm vryse ping  # all three AI models answer
@@ -264,8 +302,9 @@ pnpm vryse ping  # all three AI models answer
 - **Fact-checking is partial.** The number check only knows whether a number appears *somewhere* in the Routematic articles. A common number like "30%" used in a different context still passes. The Step 7 judge will compare claims with the actual passages.
 - **The style profile is based on one company** with 54 articles. Ranges like "5–10 sections" are only as reliable as that sample.
 - **The length correction (0.78)** was measured on a handful of articles with one model.
-- **The AI judge is noisy.** The same article scored 78.4 and 84.7 on two runs. Until Step 8 measures this, one score should be treated as roughly ±6 points.
-- **The scores aren't proven yet.** Step 8 checks that real Routematic articles score high and a generic AI article scores low; until then, the numbers are unvalidated.
+- **The judge still has some noise**, although much less than before (thinking off, 3 runs averaged). Differences under 3 points should be ignored.
+- **The calibration is small:** 6 articles. The system matching the human articles is a promising sign, not proof.
+- **"Writing to the test":** the system is guided by the same numbers it's scored on, so its scores flatter it a little.
 
 ---
 
@@ -273,7 +312,6 @@ pnpm vryse ping  # all three AI models answer
 
 | Step | What it will add |
 |---|---|
-| 8 — Calibration | Proof that the scores mean something: real Routematic articles should score high and a generic AI article low. Also measure the judge's noise and set how big an improvement must be to count. |
 | 9 — Feedback loop | A person's feedback becomes clear instructions, the article is revised, and the system checks each instruction was followed |
 | 10 — Web interface | The whole flow in a browser: brief → article → scores → feedback → improved article → side-by-side comparison |
 | 11–12 | The before/after demo and the final README |

@@ -1,0 +1,14 @@
+{
+  "decided": "2026-10-12",
+  "method": "Score the same saved draft 5 times with one judge run each; the measured half is identical every time, so all variance is the judge's.",
+  "trials": [
+    { "judge": "google/gemini-2.5-flash (thinking on)", "article": "2e466fc5 EV fleet", "overall": [80.9, 87.2, 88.4, 92.2, 82.2], "sigma": 4.63 },
+    { "judge": "google/gemini-2.5-flash (thinking on)", "article": "76d37bae new office", "overall": [85.6, 85.6, 95.6, 95.6, 95.6], "sigma": 5.48 },
+    { "judge": "google/gemini-2.5-flash (thinking off)", "article": "2e466fc5 EV fleet", "overall": [85.9, 84.7, 85.9, 82.2, 85.9], "sigma": 1.63 },
+    { "judge": "google/gemini-2.5-flash (thinking off)", "article": "76d37bae new office", "overall": [85.6, 85.6, 85.6, 85.6, 85.6], "sigma": 0.0 },
+    { "judge": "mistral/mistral-large-3", "article": "2e466fc5 EV fleet", "overall": [90.9, 92.2, 92.2, 92.2, 92.2], "sigma": 0.56, "note": "rejected: lenient — tone and specificity 5/5 on every run despite quoted unsupported claims" }
+  ],
+  "choice": { "judge": "google/gemini-2.5-flash", "thinkingBudget": 0, "judgeRuns": 3 },
+  "sigmaSingleRun": 1.63,
+  "threshold": { "formula": "2 * sqrt(2) * sigma / sqrt(judgeRuns)", "value": 2.66, "used": 3 }
+}

@@ -213,26 +213,47 @@ pnpm test && pnpm typecheck && pnpm lint
 
 An iteration is **Improved** only when all three of the following hold:
 
-1. Overall Δ ≥ the noise threshold (measured: _TBD_ points, from 3 repeated judge runs).
+1. Overall Δ ≥ the noise threshold: **3 points**. Each score is the mean of 3 judge runs; the single-run σ is 1.63, and 2·√2·σ/√3 = 2.7, rounded up to 3.
 2. No dimension drops by more than 5.
 3. At least 80% of the revision instructions are verified as addressed.
 
 A pairwise judge, with the order of the two versions randomised, gives an independent second opinion.
 
+### Judge noise (measured)
+
+Each draft was scored 5 times. The code-measured half was identical on every run, so all the variance comes from the judge.
+
+| Judge | σ of the overall score (single run) | Decision |
+|---|---|---|
+| Gemini 2.5 Flash, default thinking | 4.6 and 5.5 (two articles) | Too noisy: an improvement would need +13 points to count |
+| **Gemini 2.5 Flash, thinking off** | **1.6 and 0.0** | **Chosen.** Still critical, a third of the noise, and cheaper |
+| Mistral Large 3 | 0.6 | Rejected: stable but lenient, giving 5/5 for specificity despite quoted unsupported claims |
+
+Raw data: [`data/calibration/noise.json`](data/calibration/noise.json).
+
 ### Calibration results
 
-| Set | Overall | Structure | Style | Tone | Specificity |
-|---|---|---|---|---|---|
-| Held-out human Routematic articles | _TBD_ | | | | |
-| Generic baseline (no profile) | _TBD_ | | | | |
-| VRYSE v1 (profile + retrieval) | _TBD_ | | | | |
+Six held-out Routematic articles were never in the profile or the search index. For each one, a brief was built from its title, four body headings and length. Three sets were scored on those same briefs: the real article, a **generic baseline** (the same writer model with the brief only, no profile or examples), and **this system**. Each score is the mean of 3 judge runs. Raw data: [`data/calibration/calibration.json`](data/calibration/calibration.json).
+
+| Set | Overall | Uncapped | Structure | Style | Relevance | Completeness | Tone | Readability | Specificity |
+|---|---|---|---|---|---|---|---|---|---|
+| Held-out human Routematic articles | **85.5** | 85.5 | 79 | 79 | 98 | 100 | 67 | 83 | 92 |
+| Generic baseline (no profile) | **70.0** | 77.0 | 49 | 70 | 100 | 100 | 71 | 88 | 74 |
+| VRYSE v1 (profile + retrieval) | **87.0** | 87.0 | 87 | 70 | 100 | 100 | 75 | 97 | 84 |
+
+**Reading it:**
+- **The metric separates on-brand from generic.** Human articles beat the generic baseline by 8.5 points even uncapped. The generic articles had an FAQ in 0 of 6 cases, against 100% of Routematic's, so the cap at 70 applies. Most of the gap is structure (79 vs 49) and specificity (92 vs 74).
+- **The system matches the human articles within noise** (87.0 vs 85.5; the threshold is 3). It doesn't beat them. Style still favours the human articles (79 vs 70), so the evaluator can tell them apart.
+- **Teaching to the test.** The system is guided by the same corpus ranges it's scored against, which explains part of its structure lead (87 vs 79) and its uniformity (86–88 against the humans' 74–93).
+- Relevance and completeness saturate here, because each brief was derived from the article's own headings, so they don't discriminate in this test.
 
 ### Limitations of this evaluation
 
 - The LLM judge has variance and its own biases. They are mitigated by using a judge from a different model family, an anchored rubric, required evidence quotes, temperature 0 and the measured noise threshold, but not eliminated.
 - The band metrics reward matching the company's *averages*. A good article that is unusually short or long gets penalised.
 - Embedding similarity mixes topic and style. It can't fully separate "sounds like Routematic" from "is about the same subject".
-- With about 70 reference articles, the percentile bands are rough.
+- With 54 reference articles, the percentile bands are rough, and calibration used only 6 held-out articles.
+- Calibration briefs are derived from the held-out articles themselves, which makes relevance and completeness easy for every set.
 
 ## 9. Design decisions
 

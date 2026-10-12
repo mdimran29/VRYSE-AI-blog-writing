@@ -1,0 +1,332 @@
+{
+  "company": "routematic",
+  "judgeModel": "google/gemini-2.5-flash",
+  "writerModel": "openai/gpt-5-mini",
+  "builtAt": "2026-10-12T08:01:14.286Z",
+  "summary": {
+    "sets": {
+      "human": {
+        "n": 6,
+        "overall": 85.51303780521283,
+        "dimensions": {
+          "structure": 78.93241563853267,
+          "style": 79.31359127298687,
+          "relevance": 97.91666666666667,
+          "completeness": 100,
+          "tone": 66.66666666666667,
+          "readability": 83.43003089575585,
+          "specificity": 91.66666666666667
+        }
+      },
+      "generic": {
+        "n": 6,
+        "overall": 70,
+        "dimensions": {
+          "structure": 48.82061017852385,
+          "style": 70.12795623901798,
+          "relevance": 100,
+          "completeness": 100,
+          "tone": 70.83333333333333,
+          "readability": 87.70543876848883,
+          "specificity": 73.88888888888889
+        }
+      },
+      "system": {
+        "n": 6,
+        "overall": 87.03774441820167,
+        "dimensions": {
+          "structure": 87.3891408415218,
+          "style": 69.82620429760742,
+          "relevance": 100,
+          "completeness": 100,
+          "tone": 75,
+          "readability": 96.52777777777779,
+          "specificity": 84.41897612598052
+        }
+      }
+    },
+    "ordering": {
+      "humanAboveGeneric": true,
+      "systemAboveGeneric": true,
+      "humanAtLeastSystem": false
+    }
+  },
+  "rows": [
+    {
+      "set": "human",
+      "articleId": "best-employee-transport-tools-with-real-time-tracking-040258",
+      "title": "Best Employee Transport Tools With Real-Time Tracking",
+      "overall": 89.7592966963891,
+      "dimensions": {
+        "structure": 87.5,
+        "style": 86.29648348194547,
+        "relevance": 100,
+        "completeness": 100,
+        "tone": 75,
+        "readability": 87.5,
+        "specificity": 87.5
+      }
+    },
+    {
+      "set": "generic",
+      "articleId": "best-employee-transport-tools-with-real-time-tracking-040258",
+      "title": "Best Employee Transport Tools With Real-Time Tracking",
+      "overall": 70,
+      "dimensions": {
+        "structure": 36.06714628297362,
+        "style": 70.10924641120499,
+        "relevance": 100,
+        "completeness": 100,
+        "tone": 91.66666666666667,
+        "readability": 95.6242030592077,
+        "specificity": 91.66666666666666
+      }
+    },
+    {
+      "set": "system",
+      "articleId": "best-employee-transport-tools-with-real-time-tracking-040258",
+      "title": "Best Employee Transport Tools With Real-Time Tracking",
+      "overall": 87.62770599725702,
+      "dimensions": {
+        "structure": 87.5,
+        "style": 72.38160160834357,
+        "relevance": 100,
+        "completeness": 100,
+        "tone": 75,
+        "readability": 95.83333333333334,
+        "specificity": 85.68052342254981
+      },
+      "runId": "225eeb03-02b5-4d37-924d-ea046896196b"
+    },
+    {
+      "set": "human",
+      "articleId": "best-employee-travel-management-software-for-corporate-trave-b337af",
+      "title": "Best Employee Travel Management Software for Corporate Travel",
+      "overall": 73.95833333333334,
+      "dimensions": {
+        "structure": 75,
+        "style": 62.5,
+        "relevance": 87.5,
+        "completeness": 100,
+        "tone": 33.333333333333336,
+        "readability": 75,
+        "specificity": 75
+      }
+    },
+    {
+      "set": "generic",
+      "articleId": "best-employee-travel-management-software-for-corporate-trave-b337af",
+      "title": "Best Employee Travel Management Software for Corporate Travel",
+      "overall": 70,
+      "dimensions": {
+        "structure": 66.66666666666666,
+        "style": 69.77181503336011,
+        "relevance": 100,
+        "completeness": 100,
+        "tone": 66.66666666666666,
+        "readability": 84.77509621839192,
+        "specificity": 83.33333333333333
+      }
+    },
+    {
+      "set": "system",
+      "articleId": "best-employee-travel-management-software-for-corporate-trave-b337af",
+      "title": "Best Employee Travel Management Software for Corporate Travel",
+      "overall": 86.90478132856802,
+      "dimensions": {
+        "structure": 87.5,
+        "style": 68.27390664284007,
+        "relevance": 100,
+        "completeness": 100,
+        "tone": 75,
+        "readability": 100,
+        "specificity": 82.5
+      },
+      "runId": "5528c31c-ec1e-4607-813e-dce082ee8b2b"
+    },
+    {
+      "set": "human",
+      "articleId": "cost-effective-employee-transport-companies-in-india-10-prov-4893ed",
+      "title": "Cost-Effective Employee Transport Companies in India: 10 Providers Enterprises Can Consider",
+      "overall": 80.33040676442289,
+      "dimensions": {
+        "structure": 75,
+        "style": 73.06155554729375,
+        "relevance": 100,
+        "completeness": 100,
+        "tone": 50,
+        "readability": 69.68095654964148,
+        "specificity": 87.5
+      }
+    },
+    {
+      "set": "generic",
+      "articleId": "cost-effective-employee-transport-companies-in-india-10-prov-4893ed",
+      "title": "Cost-Effective Employee Transport Companies in India: 10 Providers Enterprises Can Consider",
+      "overall": 70,
+      "dimensions": {
+        "structure": 40.23381294964029,
+        "style": 69.01367935557698,
+        "relevance": 100,
+        "completeness": 100,
+        "tone": 58.333333333333336,
+        "readability": 87.5,
+        "specificity": 75
+      }
+    },
+    {
+      "set": "system",
+      "articleId": "cost-effective-employee-transport-companies-in-india-10-prov-4893ed",
+      "title": "Cost-Effective Employee Transport Companies in India: 10 Providers Enterprises Can Consider",
+      "overall": 86.7502316033454,
+      "dimensions": {
+        "structure": 87.5,
+        "style": 69.16782468339365,
+        "relevance": 100,
+        "completeness": 100,
+        "tone": 75,
+        "readability": 91.66666666666666,
+        "specificity": 87.5
+      },
+      "runId": "3f6633f6-cf9a-4344-8db9-4213f1f8beba"
+    },
+    {
+      "set": "human",
+      "articleId": "managing-employee-transport-in-metro-cities-9f9310",
+      "title": "Managing Employee Transport in Metro Cities",
+      "overall": 92.56683823055921,
+      "dimensions": {
+        "structure": 87.5,
+        "style": 85.09016495032245,
+        "relevance": 100,
+        "completeness": 100,
+        "tone": 91.66666666666667,
+        "readability": 88.82138573828061,
+        "specificity": 100
+      }
+    },
+    {
+      "set": "generic",
+      "articleId": "managing-employee-transport-in-metro-cities-9f9310",
+      "title": "Managing Employee Transport in Metro Cities",
+      "overall": 70,
+      "dimensions": {
+        "structure": 59.72222222222223,
+        "style": 66.7762985696765,
+        "relevance": 100,
+        "completeness": 100,
+        "tone": 50,
+        "readability": 87.5,
+        "specificity": 65
+      }
+    },
+    {
+      "set": "system",
+      "articleId": "managing-employee-transport-in-metro-cities-9f9310",
+      "title": "Managing Employee Transport in Metro Cities",
+      "overall": 86.66108304775966,
+      "dimensions": {
+        "structure": 87.5,
+        "style": 72.05541523879833,
+        "relevance": 100,
+        "completeness": 100,
+        "tone": 75,
+        "readability": 100,
+        "specificity": 72.5
+      },
+      "runId": "f6966024-2455-48a7-91e2-abf8dba52649"
+    },
+    {
+      "set": "human",
+      "articleId": "the-role-of-corporate-transport-in-employee-retention-52ab68",
+      "title": "The Role of Corporate Transport in Employee Retention",
+      "overall": 89.50731671490541,
+      "dimensions": {
+        "structure": 77.44714432535605,
+        "style": 86.55051770586446,
+        "relevance": 100,
+        "completeness": 100,
+        "tone": 75,
+        "readability": 92.07784308661303,
+        "specificity": 100
+      }
+    },
+    {
+      "set": "generic",
+      "articleId": "the-role-of-corporate-transport-in-employee-retention-52ab68",
+      "title": "The Role of Corporate Transport in Employee Retention",
+      "overall": 70,
+      "dimensions": {
+        "structure": 27.73381294964029,
+        "style": 73.63961725016549,
+        "relevance": 100,
+        "completeness": 100,
+        "tone": 75,
+        "readability": 83.33333333333333,
+        "specificity": 68.33333333333333
+      }
+    },
+    {
+      "set": "system",
+      "articleId": "the-role-of-corporate-transport-in-employee-retention-52ab68",
+      "title": "The Role of Corporate Transport in Employee Retention",
+      "overall": 86.13283096057586,
+      "dimensions": {
+        "structure": 87.5,
+        "style": 66.08082146954597,
+        "relevance": 100,
+        "completeness": 100,
+        "tone": 75,
+        "readability": 95.83333333333334,
+        "specificity": 83.33333333333333
+      },
+      "runId": "ff35a39b-5f9a-4bc6-801b-8588f0096b03"
+    },
+    {
+      "set": "human",
+      "articleId": "why-companies-need-employee-transport-management-software-47d772",
+      "title": "Why Companies Need Employee Transport Management Software",
+      "overall": 86.95603509166705,
+      "dimensions": {
+        "structure": 71.14734950584007,
+        "style": 82.38282595249515,
+        "relevance": 100,
+        "completeness": 100,
+        "tone": 75,
+        "readability": 87.5,
+        "specificity": 100
+      }
+    },
+    {
+      "set": "generic",
+      "articleId": "why-companies-need-employee-transport-management-software-47d772",
+      "title": "Why Companies Need Employee Transport Management Software",
+      "overall": 70,
+      "dimensions": {
+        "structure": 62.5,
+        "style": 71.45708081412383,
+        "relevance": 100,
+        "completeness": 100,
+        "tone": 83.33333333333333,
+        "readability": 87.5,
+        "specificity": 60
+      }
+    },
+    {
+      "set": "system",
+      "articleId": "why-companies-need-employee-transport-management-software-47d772",
+      "title": "Why Companies Need Employee Transport Management Software",
+      "overall": 88.14983357170406,
+      "dimensions": {
+        "structure": 86.83484504913076,
+        "style": 70.99765614272293,
+        "relevance": 100,
+        "completeness": 100,
+        "tone": 75,
+        "readability": 95.83333333333334,
+        "specificity": 95
+      },
+      "runId": "1e1a8312-fd3b-4f0f-854d-c38c44d68bdb"
+    }
+  ]
+}

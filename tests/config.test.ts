@@ -9,6 +9,9 @@ describe("parseConfig", () => {
     expect(config.VRYSE_JUDGE_MODEL).toBe("google/gemini-2.5-flash");
     expect(config.VRYSE_LLM_CONCURRENCY).toBe(6);
     expect(config.VRYSE_DEV_CACHE).toBe(true);
+    // Chosen in Step 8: thinking off cut judge noise from σ 4.6 to 1.6; 3 runs are averaged.
+    expect(config.VRYSE_JUDGE_THINKING_BUDGET).toBe(0);
+    expect(config.VRYSE_JUDGE_RUNS).toBe(3);
   });
 
   it("treats empty strings as unset", () => {

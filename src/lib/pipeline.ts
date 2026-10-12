@@ -68,8 +68,8 @@ export function saveEvaluation(iterationId: string, evaluation: EvaluationResult
     .run();
 }
 
-/** Re-scores a saved iteration, using the same source passages the writer was given. */
-export async function evaluateIteration(runId: string, version = 1): Promise<EvaluationResult> {
+/** A saved draft with everything needed to score it again: brief, profile, index and the writer's sources. */
+export function loadIterationContext(runId: string, version = 1) {
   const db = getDb();
   const run = db.select().from(runs).where(eq(runs.id, runId)).get();
   if (!run) throw new Error(`No run ${runId}`);
@@ -77,12 +77,20 @@ export async function evaluateIteration(runId: string, version = 1): Promise<Eva
   if (!iteration) throw new Error(`Run ${runId} has no version ${version}`);
   const profile = loadProfile(run.company);
   const index = loadIndex(run.company);
-  const brief = run.brief as ResolvedBrief;
   const meta = path.resolve(getConfig().VRYSE_DATA_DIR, "runs", runId, "v1.outline.json");
   const chunkIds: string[] = fs.existsSync(meta) ? (JSON.parse(fs.readFileSync(meta, "utf8")).excerpts?.chunkIds ?? []) : [];
   const sources = index.chunks.filter((c) => chunkIds.includes(c.id)).map(({ vector: _v, embedText: _t, ...c }) => c); // eslint-disable-line @typescript-eslint/no-unused-vars
-  const evaluation = await evaluateArticle({ markdown: iteration.markdown, brief, profile, index, sources, fingerprint: fingerprintFor(index), runId, iterationId: iteration.id });
-  saveEvaluation(iteration.id, evaluation);
+  return { run, iteration, brief: run.brief as ResolvedBrief, profile, index, sources, fingerprint: fingerprintFor(index) };
+}
+
+/** Re-scores a saved iteration, using the same source passages the writer was given. */
+export async function evaluateIteration(runId: string, version = 1, opts: { judgeRuns?: number } = {}): Promise<EvaluationResult> {
+  const ctx = loadIterationContext(runId, version);
+  const evaluation = await evaluateArticle(
+    { markdown: ctx.iteration.markdown, brief: ctx.brief, profile: ctx.profile, index: ctx.index, sources: ctx.sources, fingerprint: ctx.fingerprint, runId, iterationId: ctx.iteration.id },
+    { judgeRuns: opts.judgeRuns },
+  );
+  saveEvaluation(ctx.iteration.id, evaluation);
   fs.writeFileSync(path.resolve(getConfig().VRYSE_DATA_DIR, "runs", runId, `v${version}.eval.json`), JSON.stringify(evaluation, null, 2));
   return evaluation;
 }
