@@ -12,7 +12,7 @@ Reference documents: [ARCHITECTURE.md](ARCHITECTURE.md) · [README.md](README.md
 
 ## Overview
 
-**Progress (2026-10-12):** ✅ Step 0 · ✅ Step 1 · ✅ Step 2 · ✅ Step 3 · ✅ Step 4 · ✅ Step 5 · ✅ Step 6 · ✅ Step 7 · ✅ Step 8 · ✅ Step 9 · ⏭ next: Step 10. **Client: Routematic.** VRYSE confirmed that any client's articles may be used, and the Protecto docs were access-restricted (see Step 2).
+**Progress (2026-10-12):** ✅ Step 0 · ✅ Step 1 · ✅ Step 2 · ✅ Step 3 · ✅ Step 4 · ✅ Step 5 · ✅ Step 6 · ✅ Step 7 · ✅ Step 8 · ✅ Step 9 · ✅ Step 10 · ⏭ next: Step 11. **Client: Routematic.** VRYSE confirmed that any client's articles may be used, and the Protecto docs were access-restricted (see Step 2).
 
 | Day | Focus | Milestone at end of day |
 |---|---|---|
@@ -224,25 +224,30 @@ Problems this live cycle exposed, all fixed and tested:
 
 Fixes 3 and 4 are prompt changes; they'll be confirmed by the Step 11 demo run rather than an extra paid run now.
 
-### Step 10 — Next.js UI (3.5 h)
+### Step 10 — Next.js UI (3.5 h) ✅
 
-- [ ] **API routes (Node.js runtime):**
-  - `POST /api/runs`: validates the brief with Zod, calls `runGeneration`, and returns a `ReadableStream` of NDJSON stage events.
-  - `POST /api/runs/[id]/revise`: the same, calling `runRevision`.
-- [ ] **Server Actions:** `saveFeedback`, `compileFeedback` (returns the instructions to edit), `approveIteration` and `deleteMemory`.
-- [ ] **`/company/[slug]`:** a corpus summary and the profile shown as cards (structure bands, voice, vocabulary, do/don'ts), plus a Rebuild button.
-- [ ] **`/articles/new`:** the brief form, using shadcn Form with Zod. On submit it reads the stream and shows a stage checklist (retrieve → plan → write → lint → evaluate), then redirects to the run.
-- [ ] **`/runs/[id]`:**
-  - the article rendered with `react-markdown` and `remark-gfm`;
-  - a score panel with the overall score and a Progress bar per dimension;
-  - Tabs for weaknesses, generic passages, missing points and recommendations;
-  - a feedback form (rating, text, recommendation checkboxes) → **Compile** → an editable instruction table → **Revise**;
-  - an iteration history list (v1, v2… and their scores).
-- [ ] **`/runs/[id]/compare`:** two columns with a word-level diff from `diffWords` (additions in green, removals in red), a table of score deltas, the instruction checklist, the pairwise verdict and the improvement badge.
-- [ ] **`/memory`:** list and delete entries.
-- [ ] **`/observability`** *(stretch)*: a table of `llm_calls` with totals for tokens, cost and latency per run and per stage.
+- [x] **Setup:** Cache Components turned off in `next.config.ts` (a single-user local tool; every page shows live DB state) and data pages marked `dynamic = "force-dynamic"`. shadcn/ui initialised (base-nova style on Base UI) with button, card, input, textarea, label, badge, progress, checkbox, tabs, table and separator.
+- [x] **API routes (Node.js runtime):**
+  - `POST /api/runs` validates the brief with Zod, runs `runGeneration` and streams NDJSON stage events (`src/lib/ui/stream.ts`).
+  - `POST /api/runs/[id]/compile` returns the instructions **without revising**, so the reviewer can edit them first.
+  - `POST /api/runs/[id]/revise` runs `runRevision` with the (edited) instructions and streams events.
+- [x] **Server action:** delete a memory entry (`/memory`).
+- [x] **`/company/[slug]`:** summary, voice, typical outline, measured ranges (p10–median–p90), intro patterns with counts, do/don't rules, vocabulary and phrases to avoid.
+- [x] **`/articles/new`:** brief form (empty fields fall back to the profile) with a live stage checklist (spinner → ✓, detail, seconds), then a redirect to the run.
+- [x] **`/runs/[id]`:** version tabs with scores; the verdict card for revisions (verdict, reasons, ✓/✗ instruction checklist with evidence, untargeted-change warning, pairwise reasons); the rendered article; the score panel (overall, dimension bars, measured and judged halves, judge runs); key points; judge summary; unsupported claims; and the feedback panel (tick weaknesses → rating → text → **Compile** → edit or remove instructions → targeted revision or regenerate → live progress → jump to the new version).
+- [x] **`/runs/[id]/compare?a=&b=`:** score-delta table, verdict and checklist, and a side-by-side **word diff** (`diffWords`; removals red, additions green).
+- [x] **`/memory`:** saved rules per company, with delete.
+- [x] **`/observability`** (shown as "Usage"): total spend, the spending cap, the evaluation count, and calls, errors, average time and cost per stage and model.
+- [x] Verified: production build passes; every page returns 200 and an unknown run returns 404; headless-Chromium screenshots of the run, compare, form and profile pages looked right (they caught a font bug: the theme's `--font-sans` wasn't wired to Geist); and a full compile → revise cycle through the streaming API worked.
 
-**Done when** someone who has never seen the project can run the whole loop in the UI without help.
+**Done when** the whole loop runs in the UI. ✅
+
+Found by testing the UI's compile step (fixed and tested):
+- **Flash-Lite compiled feedback badly.** It invented a request and split "no links" into 9 per-section instructions. Compiling now uses GPT-5 mini (about $0.006), with a stricter prompt (one instruction per point, global for multi-section changes, never add requests). The same feedback then gave 4 correct instructions.
+- **"Remember for all articles" was still too loose.** The model flagged article-specific fixes. `isStandingRule` now requires your own wording to state a general rule ("always", "never", "all our articles", "as a rule"…) in a sentence about the same thing.
+- **The live revision confirmed the Step 9 prompt fixes:** "(Routematic internal data)" labels went from 27 to 0, Markdown links from 0 to 6, bare URLs from 1 to 0, and all 4 instructions were ✓. Verdict MIXED: +5.6 overall, but readability −8.7, and the pairwise judge preferred v2.
+
+167 tests in total. Step 10 testing cost about $0.03.
 
 ### Step 11 — Before/after demo (1 h)
 

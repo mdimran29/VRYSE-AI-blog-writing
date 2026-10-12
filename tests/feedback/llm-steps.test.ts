@@ -78,8 +78,27 @@ describe("compileFeedback", () => {
 describe("compileFeedback persistence", () => {
   it("never lets an evaluator-sourced instruction be saved as a standing preference", async () => {
     const { model } = capturingModel(JSON.stringify({ instructions: [instruction("x", { source: "evaluator", persist: true }), instruction("y", { source: "human", persist: true })], summary: "s" }));
-    const result = await compile.compileFeedback({ feedback: { text: "Never use em dashes" }, weaknesses: [], headings: [], profile: testProfile }, { model });
-    expect(result.instructions.map((i) => i.persist)).toEqual([false, true]);
+    const result = await compile.compileFeedback({ feedback: { text: "Never use em dashes in our articles." }, weaknesses: [], headings: [], profile: testProfile }, { model });
+    expect(result.instructions.map((i) => i.persist)).toEqual([false, false]); // y's text is unrelated to the rule sentence
+  });
+});
+
+describe("isStandingRule", () => {
+  it("accepts an instruction backed by a general-rule sentence in the editor's feedback", () => {
+    const feedback = "The intro is weak. As a rule for all our articles, never call anything a game-changer.";
+    expect(compile.isStandingRule("Never call anything a game-changer.", feedback)).toBe(true);
+    expect(compile.isStandingRule("Avoid the phrase game-changer in every article.", feedback)).toBe(true);
+  });
+
+  it("rejects article-specific fixes even when the model marked them persistent", () => {
+    const feedback = 'Remove every "(Routematic internal data)" label. Keep H2 headings to 4-6 words.';
+    expect(compile.isStandingRule("Remove every instance of (Routematic internal data).", feedback)).toBe(false);
+    expect(compile.isStandingRule("Edit every H2 heading to 4-6 words.", feedback)).toBe(false);
+  });
+
+  it("does not let a rule sentence about one topic make an unrelated instruction persistent", () => {
+    const feedback = "Always use British spelling. Shorten the intro.";
+    expect(compile.isStandingRule("Shorten the intro to 120 words.", feedback)).toBe(false);
   });
 });
 

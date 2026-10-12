@@ -354,3 +354,13 @@ export async function runRevision(
     files,
   };
 }
+
+/** Compiles feedback for a saved version without revising, so the reviewer can edit the instructions first. */
+export async function compileForRun(runId: string, version: number, feedback: FeedbackInput): Promise<RevisionInstruction[]> {
+  const ctx = loadIterationContext(runId, version);
+  const shown = latestEvaluation(ctx.iteration.id);
+  const selected = selectWeaknesses(shown?.weaknesses ?? [], feedback.selectedWeaknesses ?? []);
+  const headings = markdownToBlocks(ctx.iteration.markdown).filter((b) => b.type === "heading" && b.level === 2).map((b) => (b.type === "heading" ? b.text : ""));
+  const { instructions } = await compileFeedback({ feedback, weaknesses: selected, headings, profile: ctx.profile, runId });
+  return instructions;
+}

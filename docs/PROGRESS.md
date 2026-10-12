@@ -1,6 +1,6 @@
 # What has been built so far — and what it actually does
 
-_Last updated: 2026-10-12, after Step 9 of [plan.md](../plan.md)._
+_Last updated: 2026-10-12, after Step 10 of [plan.md](../plan.md)._
 
 This document explains, in plain language, every part of the system that exists today: what was built, what it does when you run it, how to try it yourself, and what the results were. For the full design, see [ARCHITECTURE.md](../ARCHITECTURE.md).
 
@@ -24,7 +24,7 @@ You give the system a short **brief**, for example "an article about moving empl
  Brief ──► ⑤ Find similar passages ──► ⑥ Plan outline ──► Write ──► Check ──► (Fix once) ──► ⑦ Score ──► Saved article + scores
 ```
 
-**What is not built yet:** the web interface (Step 10) and the final before/after demo (Step 11). Today everything runs from the command line.
+**What is not built yet:** the final before/after demo (Step 11) and the final README polish (Step 12). Everything can now be used from the **web interface** (`pnpm dev`, then open http://localhost:3000) or the command line.
 
 ---
 
@@ -319,12 +319,44 @@ pnpm vryse memory --company routematic
 
 ---
 
+### Step 10 — The web interface
+
+**Built:** a website you run on your own computer (`pnpm dev`, then open http://localhost:3000). It uses Next.js and shadcn/ui.
+
+**What each page does:**
+
+| Page | What you see and do |
+|---|---|
+| **Runs** (home) | Every article you've generated, with the score of each version |
+| **New article** | A form for the brief: topic, keyword, length, audience, key points, required sections, notes. Empty fields use Routematic's defaults. While it works, you see each stage tick off live (find → plan → write → check → score) |
+| **A run** | The article, its scores (overall and 7 dimensions), which key points are covered, and the judge's summary and unsupported claims. **Feedback:** tick the weaknesses you agree with, give a rating, write feedback, press **Compile**, and **edit or remove** the instructions before pressing **Revise**. For a revised version, the **verdict** with ✓/✗ for each instruction |
+| **Compare** | Old and new side by side: removed words in red, added words in green, plus the score changes per dimension |
+| **Style profile** | What the system learned about Routematic: voice, structure, measured ranges, intro patterns, do/don't rules, phrases to avoid |
+| **Memory** | Your saved general rules, with a delete button |
+| **Usage** | Total AI spend, the spending cap, and calls, errors, time and cost per step |
+
+**Checked:** the production build works; every page loads (an unknown run correctly shows "not found"); screenshots of the pages looked right after one font fix; and a full feedback cycle ran through the same connection the website uses.
+
+**Found and fixed while testing:**
+- The cheap model that turns feedback into instructions **invented a request** and split one point into 9 instructions. It now uses GPT-5 mini (still under 1 cent) with stricter rules, and the same feedback gave 4 correct instructions.
+- It still tried to **"remember" article-specific fixes as permanent rules**. Code now only remembers a rule if *your* words say it's general ("always", "never", "all our articles", "as a rule"…).
+- **The fixes from Step 9 are confirmed working:** in the new version, the "(Routematic internal data)" labels dropped from 27 to 0, proper links went from 0 to 6, and every heading became 4–6 words. The verdict was still MIXED, because readability dropped and the comparison judge preferred the older version. The system reports that honestly.
+
+**Cost of Step 10 testing:** about $0.03.
+
+**Try it:**
+```bash
+pnpm dev     # then open http://localhost:3000
+```
+
+---
+
 ## 4. Money and time so far
 
 | Item | Amount |
 |---|---|
-| Total AI spend for all building and testing | **$1.13** |
-| Free credit left (of $5 per 30 days) | **about $3.87** |
+| Total AI spend for all building and testing | **$1.16** |
+| Free credit left (of $5 per 30 days) | **about $3.84** |
 | Cost of one fresh article, including its score (3 judge runs) | about **$0.05** |
 | Spending cap | **$3.00** total (`VRYSE_BUDGET_USD`) |
 | Time for one fresh article, including its score | about **2 minutes** |
@@ -334,7 +366,7 @@ pnpm vryse memory --company routematic
 ## 5. How to check that everything works
 
 ```bash
-pnpm test        # 164 automatic tests
+pnpm test        # 167 automatic tests
 pnpm typecheck   # TypeScript has no errors
 pnpm lint        # code style is clean
 pnpm vryse ping  # all three AI models answer
@@ -357,5 +389,4 @@ pnpm vryse ping  # all three AI models answer
 
 | Step | What it will add |
 |---|---|
-| 10 — Web interface | The whole flow in a browser: brief → article → scores → feedback → improved article → side-by-side comparison |
 | 11–12 | The before/after demo and the final README |
