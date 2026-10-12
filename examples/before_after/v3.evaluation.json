@@ -1,0 +1,367 @@
+{
+  "overall": 88.42575254938158,
+  "capped": false,
+  "keyPoints": [
+    {
+      "point": "Dynamic rerouting around waterlogged roads",
+      "status": "covered",
+      "evidence": "This article covers dynamic rerouting, employee communications, safety SOPs for women and night shifts, vendor continuity clauses and a practical monsoon playbook you can implement before peak rains."
+    },
+    {
+      "point": "Communicating delays and changes to employees",
+      "status": "covered",
+      "evidence": "This article covers dynamic rerouting, employee communications, safety SOPs for women and night shifts, vendor continuity clauses and a practical monsoon playbook you can implement before peak rains."
+    },
+    {
+      "point": "Safety rules for women and night-shift employees during heavy rain",
+      "status": "covered",
+      "evidence": "This article covers dynamic rerouting, employee communications, safety SOPs for women and night shifts, vendor continuity clauses and a practical monsoon playbook you can implement before peak rains."
+    },
+    {
+      "point": "Business continuity planning with transport vendors",
+      "status": "covered",
+      "evidence": "This article covers dynamic rerouting, employee communications, safety SOPs for women and night shifts, vendor continuity clauses and a practical monsoon playbook you can implement before peak rains."
+    }
+  ],
+  "genericPassages": [
+    {
+      "quote": "Operationally you need a predictable playbook that keeps vehicles moving, protects vulnerable employees and preserves service continuity without ballooning costs.",
+      "why": "While specific to the topic, the phrasing 'predictable playbook' and 'preserves service continuity' could appear on many operational blogs."
+    },
+    {
+      "quote": "Planning prevents that cascade.",
+      "why": "This is a very general statement that could apply to any planning scenario."
+    },
+    {
+      "quote": "Employees must get timely, consistent updates; inconsistency breeds anxiety and unsanctioned travel.",
+      "why": "This is a universally applicable statement about communication, not specific to monsoon or transport."
+    }
+  ],
+  "unsupportedClaims": [
+    {
+      "quote": "Scenario: a missed morning run leads to, for instance, 12% fewer staff at the 10:00 slot, forcing overtime for other teams and impacting client SLAs the same day.",
+      "why": "This is presented as a hypothetical scenario, but the '12% fewer staff' is a specific figure not supported by any source."
+    }
+  ],
+  "strengths": [
+    "The article is highly specific and actionable, providing concrete checklists, sample messages, and contract language.",
+    "It covers all required key points from the brief comprehensively.",
+    "The use of a table for vendor contract clauses is an excellent way to present information clearly and aligns with house style.",
+    "The FAQ section is well-structured and provides concise, operational answers."
+  ],
+  "weaknesses": [
+    {
+      "issue": "Introductory paragraph is too long.",
+      "severity": "high",
+      "evidence": "When monsoon flooding turns arterial roads and underpasses into extended delays, sudden detours and unsafe pickup points, shuttles stop, employees miss shifts and your payroll and SLA risk rises sharply. That single closure can cascade into lost productive hours, missed client windows and an anxious workforce — especially for night shifts and large sites where alternate transport is limited. Operationally you need a predictable playbook that keeps vehicles moving, protects vulnerable employees and preserves service continuity without ballooning costs. This article covers dynamic rerouting, employee communications, safety SOPs for women and night shifts, vendor continuity clauses and a practical monsoon playbook you can implement before peak rains.",
+      "recommendation": "Condense the introductory paragraph to be within the 120-140 word limit, focusing on the pain point and what the article will cover.",
+      "target": "Intro",
+      "dimension": "general",
+      "source": "judge"
+    },
+    {
+      "issue": "Measured bold phrases per 1,000 words: 23 (routematic range 2.8–17.4)",
+      "severity": "high",
+      "dimension": "style",
+      "evidence": "",
+      "recommendation": "Bold less.",
+      "target": "global",
+      "source": "measured"
+    },
+    {
+      "issue": "Measured links per 1,000 words: 0.0 (routematic range 2.8–6.3)",
+      "severity": "high",
+      "dimension": "style",
+      "evidence": "",
+      "recommendation": "Link to related articles and sources (only real URLs).",
+      "target": "global",
+      "source": "measured"
+    },
+    {
+      "issue": "Overall similarity to routematic's articles is low (0.856; references 0.885–0.944)",
+      "severity": "high",
+      "dimension": "style",
+      "evidence": "",
+      "recommendation": "Follow the house voice and formatting more closely.",
+      "target": "global",
+      "source": "measured"
+    },
+    {
+      "issue": "The 'Monsoon playbook' section functions as a conclusion but is not explicitly titled 'Conclusion'.",
+      "severity": "medium",
+      "evidence": "## Monsoon playbook",
+      "recommendation": "Rename the 'Monsoon playbook' section to 'Conclusion' to align with the house style, which typically places a conclusion before the FAQ.",
+      "target": "Monsoon playbook",
+      "dimension": "general",
+      "source": "judge"
+    },
+    {
+      "issue": "Some paragraphs are longer than the recommended 1-3 sentences or 25-40 words.",
+      "severity": "medium",
+      "evidence": "Monsoon flooding is an operational risk that affects cost, safety and compliance simultaneously. In Mumbai and Chennai, low-lying arterial stretches can close for hours; in Bengaluru, overflowing underpasses create sudden detours that, for example, add 30–60 minutes to routes. A single waterlogged stretch can cause whole shuttle runs to be cancelled, increasing payroll costs from paid but idle hours; reduce headcount available for morning shifts, affecting service delivery in BPO/GCC sites; and raise safety and legal exposure when employees, especially women or night-shift staff, are forced to wait at unsheltered pickup points.",
+      "recommendation": "Break down longer paragraphs into shorter, more digestible chunks to improve readability and scannability.",
+      "target": "Why monsoon planning matters",
+      "dimension": "general",
+      "source": "judge"
+    },
+    {
+      "issue": "The use of 'game-changer' in the 'Monsoon playbook' section is a marketing buzzword to avoid.",
+      "severity": "low",
+      "evidence": "Operational benefits: Fewer cancellations, lower unplanned payroll costs, improved employee confidence and clearer legal compliance. Next step: Book a free monsoon readiness review with Routematic's operations team to test your routes, messages and vendor SLAs before peak rains. This proactive approach is a game-changer for monsoon preparedness.",
+      "recommendation": "Remove or rephrase the sentence containing 'game-changer' to align with the plain language and evidence-first tone.",
+      "target": "Monsoon playbook",
+      "dimension": "general",
+      "source": "judge"
+    }
+  ],
+  "summary": "The article is a strong draft, effectively addressing the brief's requirements with specific, actionable advice for managing employee commutes during monsoon flooding. It largely adheres to the routematic house style in terms of content and tone, providing practical guidance for the target audience. Minor structural and stylistic adjustments, particularly regarding paragraph length and the conclusion section, would bring it fully in line with expectations.",
+  "judge": {
+    "model": "google/gemini-2.5-flash",
+    "available": true,
+    "runs": 3,
+    "thinkingBudget": 0
+  },
+  "dimensions": {
+    "structure": {
+      "score": 87.5,
+      "weight": 0.2,
+      "deterministic": 100,
+      "judge": 75,
+      "features": [
+        {
+          "feature": "h2Count",
+          "value": 8,
+          "band": "5–10",
+          "score": 100
+        },
+        {
+          "feature": "h3PerH2",
+          "value": 0.7142857142857143,
+          "band": "0–2.9",
+          "score": 100
+        },
+        {
+          "feature": "introWords",
+          "value": 106,
+          "band": "87.4–215",
+          "score": 100
+        },
+        {
+          "feature": "closingWords",
+          "value": 60,
+          "band": "50.5–198.9",
+          "score": 100
+        },
+        {
+          "feature": "faqQuestionCount",
+          "value": 5,
+          "band": "4–5",
+          "score": 100
+        },
+        {
+          "feature": "hasFaq",
+          "value": 1,
+          "band": "in 100% of articles",
+          "score": 100
+        },
+        {
+          "feature": "faqLast",
+          "value": 1,
+          "band": "last in 51/54 articles",
+          "score": 100
+        }
+      ],
+      "reasoning": "The article largely follows the house structure, including an intro, key takeaways, keyword-led H2s, and a final FAQ. However, the conclusion is not a distinct section and the intro is slightly over the word count.",
+      "evidence": [
+        "When monsoon flooding turns arterial roads and underpasses into extended delays, sudden detours and unsafe pickup points, shuttles stop, employees miss shifts and your payroll and SLA risk rises sharply.",
+        "## Key takeaways",
+        "## FAQs"
+      ]
+    },
+    "style": {
+      "score": 75.46209608024125,
+      "weight": 0.2,
+      "deterministic": 75.9241921604825,
+      "judge": 75,
+      "features": [
+        {
+          "feature": "wordsPerSentenceMean",
+          "value": 16.518987341772153,
+          "band": "11.2–18",
+          "score": 100
+        },
+        {
+          "feature": "wordsPerSentenceStd",
+          "value": 8.35579198723957,
+          "band": "6–9.1",
+          "score": 100
+        },
+        {
+          "feature": "wordsPerParagraphMean",
+          "value": 30.833333333333332,
+          "band": "25.1–49.2",
+          "score": 100
+        },
+        {
+          "feature": "oneSentenceParagraphRate",
+          "value": 0.3888888888888889,
+          "band": "0.104–0.574",
+          "score": 100
+        },
+        {
+          "feature": "sentenceStartDiversity",
+          "value": 0.7848101265822784,
+          "band": "0.494–0.718",
+          "score": 100
+        },
+        {
+          "feature": "secondPersonPer1k",
+          "value": 9.01481004507405,
+          "band": "0–14.3",
+          "score": 100
+        },
+        {
+          "feature": "firstPersonPluralPer1k",
+          "value": 0,
+          "band": "0–2.6",
+          "score": 100
+        },
+        {
+          "feature": "boldPer1k",
+          "value": 23.1809401159047,
+          "band": "2.8–17.4",
+          "score": 11.04523465318261
+        },
+        {
+          "feature": "linksPer1k",
+          "value": 0,
+          "band": "2.8–6.3",
+          "score": 0
+        },
+        {
+          "feature": "aiIsmsPer1k",
+          "value": 0.643915003219575,
+          "band": "0–1.2",
+          "score": 100
+        },
+        {
+          "feature": "styleSimilarity",
+          "value": 0.855961546999023,
+          "band": "0.885–0.944",
+          "score": 24.12087911212496
+        }
+      ],
+      "reasoning": "The article generally adheres to the routematic voice, being prescriptive and practical. However, there are a few instances of marketing buzzwords and slightly longer paragraphs than typical.",
+      "evidence": [
+        "Operationally you need a predictable playbook that keeps vehicles moving, protects vulnerable employees and preserves service continuity without ballooning costs.",
+        "Dynamic rerouting combines real-time road condition data, vehicle telemetry and a rule engine that can reassign pickups automatically when a route segment becomes impassable.",
+        "Inconsistency breeds anxiety and unsanctioned travel."
+      ]
+    },
+    "relevance": {
+      "score": 100,
+      "weight": 0.15,
+      "deterministic": 100,
+      "judge": 100,
+      "features": [
+        {
+          "feature": "briefSimilarity",
+          "value": 0.9062483106649565,
+          "band": "references p50 0.701 · p90 0.749",
+          "score": 100
+        }
+      ],
+      "reasoning": "Every section directly addresses the topic of keeping employee commutes running during monsoon flooding and is tailored to the target audience's operational concerns.",
+      "evidence": [
+        "This article covers dynamic rerouting, employee communications, safety SOPs for women and night shifts, vendor continuity clauses and a practical monsoon playbook you can implement before peak rains.",
+        "Dynamic rerouting combines real-time road condition data, vehicle telemetry and a rule engine that can reassign pickups automatically when a route segment becomes impassable.",
+        "Employers have a duty-of-care heightened during heavy rain and night operations."
+      ]
+    },
+    "completeness": {
+      "score": 100,
+      "weight": 0.15,
+      "deterministic": 100,
+      "judge": 100,
+      "features": [
+        {
+          "feature": "length",
+          "value": 1553,
+          "band": "target 1450",
+          "score": 100
+        },
+        {
+          "feature": "requiredSections",
+          "value": 1,
+          "band": "1 required",
+          "score": 100
+        }
+      ],
+      "reasoning": "All key points from the brief are covered comprehensively and with practical detail, including specific examples and actionable advice.",
+      "evidence": [
+        "This article covers dynamic rerouting, employee communications, safety SOPs for women and night shifts, vendor continuity clauses and a practical monsoon playbook you can implement before peak rains.",
+        "Safety first for vulnerable groups: Enforce simple SOPs for women and night-shift staff — verified drivers, safe-drop, buddy systems and stage-wise handoffs.",
+        "Vendor continuity: Contract for alternative vehicles, priority allocation and explicit SLAs with penalties and drill requirements."
+      ]
+    },
+    "tone": {
+      "score": 75,
+      "weight": 0.1,
+      "deterministic": null,
+      "judge": 75,
+      "features": [],
+      "reasoning": "The tone is largely authoritative and practical, aligning with the house style. There are minor deviations with some slightly more casual phrasing or marketing-like language.",
+      "evidence": [
+        "Operationally you need a predictable playbook that keeps vehicles moving, protects vulnerable employees and preserves service continuity without ballooning costs.",
+        "Inconsistency breeds anxiety and unsanctioned travel.",
+        "Planning prevents that cascade."
+      ]
+    },
+    "readability": {
+      "score": 87.5,
+      "weight": 0.1,
+      "deterministic": 100,
+      "judge": 75,
+      "features": [
+        {
+          "feature": "fleschKincaidGrade",
+          "value": 14.393045045045046,
+          "band": "9.9–17",
+          "score": 100
+        },
+        {
+          "feature": "fleschReadingEase",
+          "value": 31.412270270270312,
+          "band": "8.5–51.3",
+          "score": 100
+        }
+      ],
+      "reasoning": "The article is generally easy to follow with clear headings and lists. Some paragraphs are a bit dense, and the sentence length could be varied more for better flow.",
+      "evidence": [
+        "Checklist to implement dynamic rerouting:",
+        "Employees must get timely, consistent updates; inconsistency breeds anxiety and unsanctioned travel.",
+        "Operational trade-offs: dynamic rerouting reduces cancellations but can increase per-kilometre cost and average trip time; measure both to balance reliability versus cost."
+      ]
+    },
+    "specificity": {
+      "score": 95.83333333333334,
+      "weight": 0.1,
+      "deterministic": 100,
+      "judge": 91.66666666666667,
+      "features": [
+        {
+          "feature": "numbersPer1k",
+          "value": 13.522215067611075,
+          "band": "5.9–30.2",
+          "score": 100
+        }
+      ],
+      "reasoning": "The article is highly specific, offering concrete examples, checklists, and sample language. It avoids vague claims and provides actionable advice.",
+      "evidence": [
+        "In Mumbai and Chennai, low-lying arterial stretches can close for hours; in Bengaluru, overflowing underpasses create sudden detours that, for example, add 30–60 minutes to routes.",
+        "Sample SMS/Push: ALERT: Due to waterlogging on [Area], all pickups at [Stop A] are cancelled for the next 60 minutes. Do not wait at the stop; standby instructions will follow.",
+        "Vendor must maintain X alternative vehicles (MPVs/trucks) during monsoon months."
+      ]
+    }
+  }
+}

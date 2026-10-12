@@ -14,6 +14,7 @@ import { search, selectExcerpts } from "@/lib/retrieval/search";
 import type { ChunkRole } from "@/lib/retrieval/chunks";
 import { evaluateIteration, latestEvaluation, loadIterationContext, runGeneration, runRevision } from "@/lib/pipeline";
 import { forget, listMemory } from "@/lib/feedback/memory";
+import { exportRun } from "@/lib/export";
 import { improvementThreshold, measureNoise } from "@/lib/evaluation/noise";
 import { runCalibration } from "@/lib/evaluation/calibrate";
 import type { EvaluationResult } from "@/lib/evaluation/evaluate";
@@ -266,6 +267,16 @@ program
     for (const reason of r.verdict.reasons) console.log(`  - ${reason}`);
     if (r.verdict.pairwise) for (const reason of r.verdict.pairwise.reasons) console.log(`    · ${reason}`);
     console.log(`Cycle cost $${r.costUsd.toFixed(4)} · saved ${path.relative(process.cwd(), r.files.markdown)}`);
+  });
+
+program
+  .command("export")
+  .description("Write a run (brief, versions, evaluations, revisions, diffs, summary) into a folder (no AI call)")
+  .requiredOption("--run <id>", "run id")
+  .requiredOption("--out <dir>", "output folder, e.g. examples/before_after")
+  .action((opts: { run: string; out: string }) => {
+    const { files } = exportRun(opts.run, opts.out);
+    console.log(`Wrote ${files.length} files to ${opts.out}: ${files.join(", ")}`);
   });
 
 program

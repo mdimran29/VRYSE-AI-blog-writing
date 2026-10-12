@@ -16,7 +16,11 @@ export function getDb(): Db {
   const dbPath = path.resolve(getConfig().VRYSE_DB_PATH);
   fs.mkdirSync(path.dirname(dbPath), { recursive: true });
   const sqlite = new Database(dbPath);
-  sqlite.pragma("journal_mode = WAL");
+  // Rollback journal, not WAL: the web server and short-lived CLI processes share this file, and in WAL
+  // mode a long-running dev server kept a stale view of the database after CLI runs wrote to it.
+  // (The switch only takes effect when no other process has the database open.)
+  sqlite.pragma("journal_mode = DELETE");
+  sqlite.pragma("busy_timeout = 5000");
   sqlite.pragma("foreign_keys = ON");
   db = drizzle(sqlite, { schema });
   migrate(db, { migrationsFolder: path.resolve(process.cwd(), "drizzle") });

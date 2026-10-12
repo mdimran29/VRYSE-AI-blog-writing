@@ -1,0 +1,166 @@
+{
+  "fromVersion": 2,
+  "mode": "revise",
+  "feedback": {
+    "text": "Much better voice. Two corrections: the bold removal went too far - put bold back on the lead-in phrase of each list item and Key Takeaways bullet, as Routematic does, and nowhere else. Replace the '(hypothetical example)' tags with natural wording such as 'for example, a detour can add 30-60 minutes'. Tighten the intro to about 130 words.",
+    "rating": 4,
+    "selectedWeaknesses": [
+      1,
+      6
+    ]
+  },
+  "selectedWeaknesses": [
+    {
+      "issue": "Introductory paragraph is too long.",
+      "severity": "high",
+      "evidence": "When heavy rain turns main roads into waterlogged bottlenecks, shuttles stop, employees miss shifts and your operations and payroll costs spike. That single morning closure can cascade into lost productive hours, missed SLAs and an anxious workforce — especially in cities where low-lying stretches and clogged drains are common. This article gives a practical, operational playbook — dynamic rerouting, communicating delays, safety rules for women and night-shift staff, and business continuity with transport vendors — so you can keep commutes running during monsoon flooding.",
+      "recommendation": "Condense the intro to be within the 120-140 word limit, focusing on the pain point and what the article covers.",
+      "target": "Introduction",
+      "dimension": "general",
+      "source": "judge"
+    },
+    {
+      "issue": "Measured bold phrases per 1,000 words: 0.0 (routematic range 2.8–17.4)",
+      "severity": "medium",
+      "dimension": "style",
+      "evidence": "",
+      "recommendation": "Bold the primary keyword and key phrases as the house style does.",
+      "target": "global",
+      "source": "measured"
+    }
+  ],
+  "instructions": [
+    {
+      "id": "I1",
+      "scope": "global",
+      "target": "global",
+      "action": "restyle",
+      "instruction": "Restore bold on the lead-in phrase of every list item across the article and on the lead-in phrase of each Key takeaways bullet (as Routematic house style). Remove bold formatting from all other words so bold appears only on those lead-in phrases.",
+      "acceptanceCheck": "Every list item and every bullet in the Key takeaways section begins with a bolded lead-in phrase, and there are no other bolded words anywhere in the draft.",
+      "source": "human",
+      "persist": false
+    },
+    {
+      "id": "I2",
+      "scope": "section",
+      "target": "intro",
+      "action": "shorten",
+      "instruction": "Condense the introduction to about 130 words (keep it within 120–140 words). Make the opening focus on a concrete operational pain point caused by monsoon travel (e.g., extended delays, detours, safety risks) and include one concise sentence stating what the article will cover; cut background or secondary detail.",
+      "acceptanceCheck": "The intro paragraph is between 120 and 140 words, its first sentence names a specific operational pain point, and one subsequent sentence clearly states what the article will cover.",
+      "source": "human",
+      "persist": false
+    },
+    {
+      "id": "I3",
+      "scope": "global",
+      "target": "global",
+      "action": "rewrite",
+      "instruction": "Replace every literal '(hypothetical example)' tag with natural example wording (e.g., 'for example, a detour can add 30–60 minutes' or 'for instance, an overturned truck may cause a 2–3 hour delay') and rephrase the sentence so the example reads smoothly without the parenthetical label.",
+      "acceptanceCheck": "No '(hypothetical example)' strings remain in the draft; each former tag has been replaced by natural phrasing such as 'for example' and at least one example includes a numeric impact (e.g., '30–60 minutes').",
+      "source": "human",
+      "persist": false
+    }
+  ],
+  "remembered": [],
+  "verification": [
+    {
+      "id": "I1",
+      "addressed": true,
+      "evidence": "Every list item and every bullet in the Key takeaways section begins with a bolded lead-in phrase, and there are no other bolded words anywhere in the draft."
+    },
+    {
+      "id": "I2",
+      "addressed": true,
+      "evidence": "When monsoon flooding turns arterial roads and underpasses into extended delays, sudden detours and unsafe pickup points, shuttles stop, employees miss shifts and your payroll and SLA risk rises sharply. That single closure can cascade into lost productive hours, missed client windows and an anxious workforce — especially for night shifts and large sites where alternate transport is limited. Operationally you need a predictable playbook that keeps vehicles moving, protects vulnerable employees and preserves service continuity without ballooning costs. This article covers dynamic rerouting, employee communications, safety SOPs for women and night shifts, vendor continuity clauses and a practical monsoon playbook you can implement before peak rains."
+    },
+    {
+      "id": "I3",
+      "addressed": true,
+      "evidence": "In Mumbai and Chennai, low-lying arterial stretches can close for hours; in Bengaluru, overflowing underpasses create sudden detours that, for example, add 30–60 minutes to routes."
+    }
+  ],
+  "pairwise": {
+    "winner": "second",
+    "confidence": 4,
+    "reasons": [
+      "Draft B's introduction is more direct and prescriptive, immediately setting the tone for a practical, operational playbook, aligning better with Routematic's 'decisive and prescriptive' voice. Draft A's intro is good but slightly less impactful.",
+      "Draft B consistently uses bolding for lead-in phrases in lists and for FAQ questions, which is a specific formatting requirement of the Routematic house style. Draft A is inconsistent with this, only bolding some lead-ins and not the FAQ questions.",
+      "Draft B's intro is slightly longer and more detailed in setting up the problem and what the article will cover, which aligns with the typical intro length and pattern (reader pain point -> what this article covers) for Routematic articles.",
+      "Both drafts are very similar in content and structure, but Draft B's minor improvements in formatting and slightly more direct language in the intro give it an edge in adhering to the house style."
+    ],
+    "order": "first-as-A"
+  },
+  "verdict": {
+    "verdict": "mixed",
+    "delta": -0.6642039945533753,
+    "threshold": 3,
+    "dimensionDrops": [],
+    "addressedRate": 1,
+    "pairwise": {
+      "winner": "revised",
+      "confidence": 4,
+      "reasons": [
+        "Draft B's introduction is more direct and prescriptive, immediately setting the tone for a practical, operational playbook, aligning better with Routematic's 'decisive and prescriptive' voice. Draft A's intro is good but slightly less impactful.",
+        "Draft B consistently uses bolding for lead-in phrases in lists and for FAQ questions, which is a specific formatting requirement of the Routematic house style. Draft A is inconsistent with this, only bolding some lead-ins and not the FAQ questions.",
+        "Draft B's intro is slightly longer and more detailed in setting up the problem and what the article will cover, which aligns with the typical intro length and pattern (reader pain point -> what this article covers) for Routematic articles.",
+        "Both drafts are very similar in content and structure, but Draft B's minor improvements in formatting and slightly more direct language in the intro give it an edge in adhering to the house style."
+      ]
+    },
+    "reasons": [
+      "Overall -0.7 (threshold ±3 for 3 judge runs)",
+      "100% of instructions addressed",
+      "Side-by-side judge preferred: revised (confidence 4/5)"
+    ]
+  },
+  "changes": [
+    {
+      "section": "intro",
+      "status": "changed"
+    },
+    {
+      "section": "Key takeaways",
+      "status": "changed"
+    },
+    {
+      "section": "Why monsoon planning matters",
+      "status": "changed"
+    },
+    {
+      "section": "Dynamic rerouting and route optimisation",
+      "status": "changed"
+    },
+    {
+      "section": "Communicating delays and changes to employees",
+      "status": "changed"
+    },
+    {
+      "section": "Safety rules for women and night-shift employees",
+      "status": "changed"
+    },
+    {
+      "section": "Business continuity with transport vendors",
+      "status": "changed"
+    },
+    {
+      "section": "Monsoon playbook",
+      "status": "changed"
+    },
+    {
+      "section": "FAQs",
+      "status": "changed"
+    }
+  ],
+  "untargeted": [],
+  "lint": {
+    "issues": [],
+    "metrics": {
+      "words": 1553,
+      "h2Count": 8,
+      "faqQuestions": 5,
+      "copiedPassages": [],
+      "unverifiedUrls": [],
+      "unsupportedFigures": [],
+      "avoidPhrases": []
+    }
+  }
+}

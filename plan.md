@@ -12,13 +12,13 @@ Reference documents: [ARCHITECTURE.md](ARCHITECTURE.md) · [README.md](README.md
 
 ## Overview
 
-**Progress (2026-10-12):** ✅ Step 0 · ✅ Step 1 · ✅ Step 2 · ✅ Step 3 · ✅ Step 4 · ✅ Step 5 · ✅ Step 6 · ✅ Step 7 · ✅ Step 8 · ✅ Step 9 · ✅ Step 10 · ⏭ next: Step 11. **Client: Routematic.** VRYSE confirmed that any client's articles may be used, and the Protecto docs were access-restricted (see Step 2).
+**Progress (2026-10-12):** ✅ Step 0 · ✅ Step 1 · ✅ Step 2 · ✅ Step 3 · ✅ Step 4 · ✅ Step 5 · ✅ Step 6 · ✅ Step 7 · ✅ Step 8 · ✅ Step 9 · ✅ Step 10 · ✅ Step 11 · ✅ Step 12 · **All steps complete.** **Client: Routematic.** VRYSE confirmed that any client's articles may be used, and the Protecto docs were access-restricted (see Step 2).
 
 | Day | Focus | Milestone at end of day |
 |---|---|---|
-| **Day 1** | Scaffold, data, parsing, analysis | `data/profiles/routematic.json` exists and looks right |
-| **Day 2** | Retrieval, generation, evaluation, calibration | CLI generates and scores an article; the calibration table is filled in |
-| **Day 3** | Feedback loop, UI, demo, docs | Full loop works in the UI; the before/after example and README are complete |
+| **Day 1** ✅ | Scaffold, data, parsing, analysis | `data/profiles/routematic.json` exists and looks right |
+| **Day 2** ✅ | Retrieval, generation, evaluation, calibration | CLI generates and scores an article; the calibration table is filled in |
+| **Day 3** ✅ | Feedback loop, UI, demo, docs | Full loop works in the UI; the before/after example and README are complete |
 
 ### Budget rules (to stay inside the free $5)
 
@@ -249,50 +249,48 @@ Found by testing the UI's compile step (fixed and tested):
 
 167 tests in total. Step 10 testing cost about $0.03.
 
-### Step 11 — Before/after demo (1 h)
+### Step 11 — Before/after demo (1 h) ✅
 
-- [ ] Optionally switch the writer to `openai/gpt-5` or `openai/gpt-4.1` for extra polish, then run `pnpm vryse ping`. Choose one of the example briefs, generate v1 and read the evaluation.
-- [ ] Write **realistic** feedback that targets real weaknesses, for example: "intro is generic, open with a concrete commute problem; too many product mentions; add a comparison table like other Routematic posts; the cost section needs a worked example".
-- [ ] Revise to v2 and re-evaluate. If v2 isn't *Improved*, report that honestly and explain why. That still shows engineering judgment.
-- [ ] *(Stretch)* Do a second cycle to get v3 and show the trend.
-- [ ] `pnpm vryse export --run <id> --out examples/before_after/` exports the brief, v1.md, eval-v1.json, feedback, instructions, v2.md, eval-v2.json, a diff and the cost.
-- [ ] Take screenshots of the Review and Compare pages for the README.
-- [ ] Fill in README §10 using the real numbers.
+- [x] `src/lib/export.ts` + `pnpm vryse export --run <id> --out <dir>`: brief, every version, evaluations, revisions, unified diffs and a `README.md` summary (`renderSummary`, tested). No AI calls.
+- [x] A fresh article for `examples/briefs/monsoon-commute-disruption.json`, the hardest brief because no reference article covers monsoons, with **3 judge runs**. v1: **83.5**, 1,488 words for a 1,450 target, no repair needed, 2 unsupported claims (the earlier EV draft had 7).
+- [x] Cycle 1, with feedback written by the developer acting as editor: 4 ticked weaknesses plus notes on unsourced figures, "we" vs "you", the conclusion heading and choppy paragraphs. 7 instructions, **7/7 ✓**. **83.5 → 89.1, IMPROVED** (+5.6, threshold 3; style 56 → 77). The **side-by-side judge preferred v1 (4/5)**: the bold removal overshot (0 per 1k against the house 3–17) and the "(hypothetical example)" tags were awkward.
+- [x] Cycle 2: restore lead-in bold, use natural "for example" wording, tighten the intro. 3 instructions, **3/3 ✓**. 89.1 → 88.4, **MIXED** (−0.7, within noise), and the **side-by-side judge now preferred the revision (4/5)**. Net v1 → v3: **+4.9**, above the threshold.
+- [x] Exported to `examples/before_after/` (12 files). Screenshots of the run, compare and new-article pages are in `docs/images/`.
+- [x] README §10 filled in from the real run. The demo cost **$0.133**.
 
-**Done when** the README contains a complete before/after with score deltas taken from the real run.
+**Done when** the README has a complete before/after from a real run. ✅
 
-### Step 12 — Documentation and polish (1.5 h)
+### Step 12 — Documentation and polish (1.5 h) ✅
 
-- [ ] Fill in every _TBD_ in the README: the calibration table, the noise threshold, the before/after section, and the measured cost and latency per article.
-- [ ] Update ARCHITECTURE.md wherever the implementation ended up different from the plan.
-- [ ] Review the Known limitations section. Add anything real you ran into, such as heading heuristics that failed or judge disagreements.
-- [ ] Test a clean install: clone into a new folder, run `pnpm install`, then follow the README word for word.
-- [ ] Run `pnpm typecheck`, `pnpm lint` and `pnpm test`. All must pass.
-- [ ] *(Optional)* Record a 2–3 minute screen capture of the full loop.
+- [x] README rewritten against what was actually built: headline results, a CLI table with the cost of each command, every environment variable, the full evaluation methodology (noise, calibration, how improvement is decided), design decisions with the evidence behind each, the before/after, limitations and future work. Statements about features that weren't built were removed (the Sheets/Drive importer, an approve step, a `--company` flag on `generate`, and a `compare` CLI command).
+- [x] ARCHITECTURE.md updated where the implementation differs from the plan: manual ingestion and clutter removal, outline checks, lint rules, length calibration and truthfulness rules, the feedback compiler model and the standing-rule gate, like-for-like re-scoring, the rollback journal, the spending cap, the never-cached judge, the UI routes and the full CLI, and the measured cost table.
+- [x] `.env.example`: unused Sheets variables removed, and `VRYSE_JUDGE_SIGMA` and `VRYSE_BUDGET_USD` documented.
+- [x] Found while taking screenshots: the user's long-running dev server returned 404 for the new run and hit `database disk image is malformed`, while the file itself passed `integrity_check`. This was a stale WAL view across processes. The fix is the rollback journal plus `busy_timeout`, which takes effect once that dev server restarts.
+- [x] Clean-install check (see below), plus `pnpm typecheck`, `pnpm lint`, `pnpm test` (170) and `pnpm build`, all passing.
 
-**Done when** the submission checklist below is fully ticked.
+**Done when** the submission checklist below is fully ticked. ✅
 
 ---
 
 ## Submission checklist (from the brief, §12)
 
-- [ ] Working application
-- [ ] Source code
-- [ ] Reference document processing — Step 2
-- [ ] Content and format analysis — Steps 3–4
-- [ ] Article generation — Steps 5–6
-- [ ] Quality evaluation — Step 7
-- [ ] Quantitative performance indicators — Steps 7–8
-- [ ] Human feedback mechanism — Steps 9–10
-- [ ] Regeneration based on feedback — Step 9
-- [ ] Before/after improvement example — Step 11
-- [ ] Architecture documentation — ARCHITECTURE.md
-- [ ] README
-- [ ] Setup and run instructions
-- [ ] Design decisions
-- [ ] Evaluation methodology
-- [ ] Known limitations
-- [ ] Potential future improvements
+- [x] Working application
+- [x] Source code
+- [x] Reference document processing — Step 2
+- [x] Content and format analysis — Steps 3–4
+- [x] Article generation — Steps 5–6
+- [x] Quality evaluation — Step 7
+- [x] Quantitative performance indicators — Steps 7–8
+- [x] Human feedback mechanism — Steps 9–10
+- [x] Regeneration based on feedback — Step 9
+- [x] Before/after improvement example — Step 11
+- [x] Architecture documentation — ARCHITECTURE.md
+- [x] README
+- [x] Setup and run instructions
+- [x] Design decisions
+- [x] Evaluation methodology
+- [x] Known limitations
+- [x] Potential future improvements
 
 ---
 

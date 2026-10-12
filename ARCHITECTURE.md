@@ -63,20 +63,19 @@ flowchart TD
 
 | Input | How it is read |
 |---|---|
-| The client's tab in the sheet (e.g. `Routematic`) | Google Sheets API (`googleapis`), or a CSV export, gives the article titles, metadata and doc links |
-| Linked Google Docs | Drive API export as `.docx`. Fallback: manual download into `data/raw/routematic/` |
-| Local `.docx` files | `mammoth` converts them to semantic HTML, which `node-html-parser` then parses |
+| The client's "Doc Ready" articles in the sheet | Downloaded by hand as `.docx` into `data/raw/<company>/`. A Sheets/Drive connector wasn't built; the docs needed account access |
+| Local `.docx` files | `mammoth` converts them to semantic HTML, with images dropped; `node-html-parser` walks it into blocks |
 
-`mammoth` maps Word paragraph styles (`Title`, `Heading 1–3`, list styles) to `h1–h3`, `ul` and `ol`, and keeps tables, bold runs and hyperlinks. A custom style map covers any non-standard style names the documents use. The parser walks the resulting HTML in order and builds an **Article AST**:
+`mammoth` maps Word paragraph styles (`Title`, `Heading 1–3`, list styles) to `h1–h3`, `ul` and `ol`, and keeps tables, bold runs and hyperlinks. The parser walks the resulting HTML in order and builds an **Article AST**. It also removes editorial clutter ("Grammarly Report" labels and screenshots in 22 of 61 docs), stores "Meta Title / Meta Description / URL Slug" lines as metadata, drops near-duplicates (5-word-shingle Jaccard ≥ 0.5, keeping a "Revised" copy first), and holds out 10% of articles with a seeded split:
 
 ```text
 Article
- ├─ title, meta (source, url, date, keyword if present in sheet)
+ ├─ title, meta (file name; meta title, meta description and URL slug when present)
  ├─ blocks[]: Heading(level, text) | Paragraph(text, inline_marks) | List(ordered, items) | Table(rows) | Quote
  └─ markdown (rendered from blocks — single canonical text form)
 ```
 
-Some Google Docs use bold paragraphs instead of heading styles. The parser normalises these with heuristics: a short bold line followed by body text is treated as a heading. This is a known source of noise and is listed in the README's limitations.
+Some docs use bold paragraphs instead of heading styles. The parser promotes a short, fully bold line followed by body text to an H2, **but only when the doc has fewer than two real H2s**, so docs with proper styles are never altered. All 60 Routematic docs used real styles; the 7 heading-count differences against the raw files were all empty bookmark-only headings.
 
 ### 3.2 Style analysis (`src/lib/analysis/`)
 
@@ -147,7 +146,11 @@ Generation is **outline-first**, which makes structure controllable and easy to 
 
 1. **Planner** (1 call, structured output). Inputs: the brief, the profile's structure targets, the retrieved section headings, and company memory. Output: an `Outline` containing the title, intro plan, sections (heading, intent, key points to cover, target words, whether an example, data point or list is needed), FAQ items if the profile calls for them, and a conclusion/CTA plan. Each required key point from the brief is mapped to a section. This mapping later drives the completeness check.
 2. **Writer** (1 call). Inputs: the outline, the voice/style/vocabulary sections of the profile, the retrieved excerpts and company memory. Output: the full article in Markdown. A single call keeps voice consistent across sections at blog lengths of 1–3k words. Section-by-section writing is available behind a flag for longer pieces.
-3. **Lint pass** (no LLM). Checks length, heading count, banned phrases, n-gram overlap with references and broken Markdown. If a *hard* constraint fails, such as a word count outside ±25% or a missing required section, the system makes **one** automatic repair call before evaluation.
+3. **Lint pass** (no LLM). Hard checks: exactly one H1, length within ±25%, the FAQ present, required sections, **links not found in the corpus** (possibly invented), and **12-word passages copied** from the corpus. Soft checks: 8-word overlaps, avoid-phrases, H2 range, FAQ position, and **figures found in neither the corpus nor the brief**. A hard failure triggers **one** repair call, which is kept only if it reduces the hard issues.
+
+Two measured adjustments:
+- **Outline checks in code.** Every key point is assigned, required sections exist, the FAQ has at least the corpus p10 number of questions, the H2 count is within p10–p90, the conclusion comes last, and the budget is within ±20%. If any fail, the planner gets **one** re-plan with the problems listed.
+- **Length calibration.** GPT-5 mini overshot word budgets by 29–38% in 4 of 4 runs, so the writer gets budgets scaled by 0.78; the lint checks the real target. Truthfulness rules in the writer prompt: figures only from the excerpts or the brief, links only from the excerpts' URLs and always as Markdown, and never label a claim as company data unless a source does.
 
 The system prompt and profile are stable across calls, so they are placed first. That lets the provider **prompt-cache** them where it supports caching. OpenAI and Gemini cache long repeated prefixes automatically, and the wrapper also sets Anthropic cache control in case a Claude model is used later.
 
@@ -192,21 +195,24 @@ If some conditions hold and others don't, the verdict is **Mixed**. If the overa
 
 ```mermaid
 flowchart LR
-    F[Free-text feedback<br/>+ 1–5 rating<br/>+ approve/reject<br/>+ optional section notes] --> C[Feedback compiler<br/>LLM, structured output]
+    F[Free-text feedback<br/>+ 1–5 rating<br/>+ optional section notes] --> C[Feedback compiler<br/>GPT-5 mini, structured output]
     E[Evaluator weaknesses<br/>user can tick which to include] --> C
     C --> I["RevisionInstruction[]<br/>{id, scope: section|global, target,<br/> action: add|remove|rewrite|restyle|shorten|expand,<br/> instruction, acceptance_check, source: human|evaluator,<br/> persist: bool}"]
     I --> R[Reviser — edits previous draft,<br/>keeps untouched sections verbatim]
     I --> V[Verifier — judge checks each<br/>acceptance_check on new draft]
-    I -->|persist = true| M[(Company memory)]
+    I -->|persist AND your words state a general rule| M[(Company memory)]
 ```
 
 - **Why compile the feedback first?** Raw feedback like "too salesy, and the intro drags" is ambiguous. Compiled instructions such as `{scope: global, action: restyle, instruction: "limit product mentions to conclusion + 1 body section"}` and `{scope: section, target: "intro", action: shorten, instruction: "≤120 words, lead with the problem"}` can be acted on and checked. The UI shows the compiled list so the reviewer can confirm or edit it before the rewrite runs.
 - **Revise or regenerate.** The default is a **targeted revision**: the reviser gets the previous draft and the instructions, and it must leave untouched sections unchanged. This keeps what was already good and makes the diff readable. A "regenerate from outline" option exists for feedback that changes the structure.
-- **Memory.** An instruction marked `persist` is a general preference, such as "never use the phrase 'in today's digital landscape'". It is saved to company memory and goes into future planner and writer prompts as part of the profile overlay. The UI lets the user view and delete memory entries.
+- **Memory.** A general preference, such as "never call anything a game-changer", is saved to company memory and goes into future planner, writer and reviser prompts. The model's `persist` flag alone proved too loose (it marked article-specific fixes as rules), so code decides with `isStandingRule`. Only the editor's instructions qualify, and only if a sentence in the editor's own feedback contains a rule cue ("always", "never", "all our articles", "as a rule"…) and shares at least two content words with the instruction. The UI lists and deletes entries.
+- **Ticked weaknesses** are resolved against the list the reviewer saw (`selectWeaknesses`), never against a re-scored list.
+- **Compile model.** Gemini Flash-Lite invented requests and split one weakness into 9 per-section instructions, so compiling uses GPT-5 mini (about $0.006) with a stricter prompt.
+- **Like-for-like comparison.** Before a revision is judged, the previous version is re-scored if it was evaluated with different judge settings (model, runs, thinking budget are recorded with each evaluation). Evaluation, instruction verification and the pairwise comparison run in parallel. Untargeted section changes are reported (`sectionChanges`).
 
 ### 3.7 Persistence (`src/lib/db/`)
 
-SQLite, through `better-sqlite3` with the **Drizzle ORM**: a single file with no extra service, and typed queries. To deploy, the same Drizzle schema can point at Postgres (Neon) by switching the driver.
+SQLite, through `better-sqlite3` with the **Drizzle ORM**: a single file with no extra service, and typed queries. Migrations apply automatically on first open. It uses the **rollback journal with a 5 s busy timeout** rather than WAL: the web server and short-lived CLI processes share the file, and in WAL mode a long-running dev server kept a stale view after CLI runs wrote to it. To deploy, the same Drizzle schema can point at Postgres (Neon).
 
 | Table | Purpose |
 |---|---|
@@ -214,8 +220,8 @@ SQLite, through `better-sqlite3` with the **Drizzle ORM**: a single file with no
 | `profiles` | Versioned style profiles per company |
 | `runs` | A generation session: brief, company, profile version |
 | `iterations` | Draft n for a run: outline, markdown, parent iteration, revision instructions applied |
-| `evaluations` | Per-iteration scores, dimension breakdown, qualitative JSON |
-| `feedback` | Human rating, free text, approve/reject, compiled instructions |
+| `evaluations` | Per-iteration scores, dimension breakdown, qualitative JSON, judge settings |
+| `feedback` | Rating, free text, section notes, ticked weaknesses, compiled instructions |
 | `memory` | Persisted company preferences |
 | `llm_calls` | Stage, model, tokens in/out, cache hits, latency, cost estimate, status/error |
 
@@ -226,7 +232,9 @@ Every model call goes through the **Vercel AI SDK**, which makes the system prov
 - **Retries** with exponential backoff on 429 and overload errors. This matters most on free tiers.
 - **Prompt caching** of the stable prefix, through provider options.
 - **A dev response cache:** responses are keyed by a hash of (model, prompt, schema), so rerunning a step during development costs nothing.
-- **Logging** of every call to `llm_calls`: tokens, latency, cost from the gateway's price list, and any error.
+- **Logging** of every call to `llm_calls`: tokens, latency, cost (the gateway's reported cost, or list prices as a fallback) and any error.
+- **A hard spending cap** (`VRYSE_BUDGET_USD`, default $3): no new paid call once the logged total reaches it. Cached answers still work.
+- **Never-cached judge:** judge, verification and pairwise calls always make a real call, so re-scoring is an independent measurement.
 
 **Model routing (`llm/models.ts`).** By default, model strings go to the **Vercel AI Gateway**, which needs one key and gives $5 of free credit every 30 days. The free tier only allows **some** models: on 2026-10-12, every Claude model and the newest Gemini models (3.x) were blocked, while the GPT-4.1/GPT-5 families and Gemini 2.5 Flash were allowed. `pnpm vryse ping` checks the configured models. Two prefixes route around the gateway for fully free use: `google-direct/…` calls the Gemini API free tier directly, and `ollama/…` calls a local model. No pipeline code changes either way.
 
@@ -234,9 +242,9 @@ Each stage's model is set by an environment variable. The defaults are chosen to
 
 | Stage | Default model | Price per 1M tokens (in / out)* | Reason |
 |---|---|---|---|
-| Per-article extraction, feedback compiling | `google/gemini-2.5-flash-lite` | $0.10 / $0.40 | High-volume, well-scoped extraction; nearly free |
-| Profile synthesis, planner, writer, reviser | `openai/gpt-5-mini` | $0.25 / $2.00 | A strong reasoning writer at a low price. Try `openai/gpt-5` or `openai/gpt-4.1` for the final demo if the writing needs more polish |
-| Judge (absolute, pairwise, verification) | `google/gemini-2.5-flash` | $0.30 / $2.50 | A **different model family** from the writer, to reduce self-preference bias; cheap enough to run three times for the noise test |
+| Per-article extraction | `google/gemini-2.5-flash-lite` | $0.10 / $0.40 | High-volume, well-scoped extraction; nearly free |
+| Profile synthesis, planner, writer, reviser, feedback compiler | `openai/gpt-5-mini` | $0.25 / $2.00 | A strong reasoning writer at a low price, and reliable at following the compile rules |
+| Judge (absolute, pairwise, verification) | `google/gemini-2.5-flash`, **thinking off**, mean of 3 runs | $0.30 / $2.50 | A **different model family** from the writer, to reduce self-preference bias. Thinking off cut σ from 4.6 to 1.6 |
 
 \*AI Gateway list prices on 2026-10-12. Check `https://ai-gateway.vercel.sh/v1/models` for current prices.
 
@@ -245,20 +253,21 @@ Each stage's model is set by an environment variable. The defaults are chosen to
 **Next.js (App Router) with TypeScript, Tailwind and shadcn/ui.** The pipeline lives in `src/lib/` and runs only on the server. Pages are React Server Components that read SQLite directly. Interaction uses two mechanisms:
 
 - **Route Handlers that stream progress.** `POST /api/runs` and `POST /api/runs/[id]/revise` run the multi-step pipeline on the Node.js runtime. They stream NDJSON events back to the client (`{stage: "plan", status: "done"}`, and so on), so the UI shows live progress through retrieve → plan → write → lint → evaluate. A full run takes 30–90 s, so live progress makes the wait readable.
-- **Server Actions** for quick mutations: saving feedback, editing compiled instructions, approving a draft, and deleting a memory entry.
+- **`POST /api/runs/[id]/compile`** returns the compiled instructions without revising, so the reviewer can edit or remove them first. The edited list is then sent to `/revise`.
+- **A Server Action** deletes memory entries. Pages are server-rendered on demand (`dynamic = "force-dynamic"`); Cache Components are off, because every page shows live database state.
 
 | Page (route) | Shows |
 |---|---|
-| **Company** `/company/[slug]` | Corpus stats and the style profile (with distributions), plus a button to rebuild the profile |
+| **Style profile** `/company/[slug]` | Summary, voice, typical outline, measured ranges, counted intro patterns, do/don't rules, vocabulary, phrases to avoid |
 | **New article** `/articles/new` | Brief form (topic, audience, target length, key points, required sections, notes), then Generate with live stage progress |
-| **Review** `/runs/[id]` | Rendered article (`react-markdown`) · overall score and dimension bars · weaknesses and recommendations · feedback form · Compile → editable instructions → Revise |
+| **Run** `/runs/[id]?v=n` | Version tabs · verdict card (reasons, ✓/✗ checklist, untargeted changes, pairwise) · rendered article · score panel (measured and judged halves, judge runs) · key points · unsupported claims · feedback: tick weaknesses → rating → text → Compile → edit instructions → Revise or Regenerate |
 | **Compare** `/runs/[id]/compare?a=1&b=2` | Side-by-side v(n) / v(n+1) with a word-level diff (`diff` package) · score deltas per dimension · instruction checklist (✓/✗) · pairwise verdict |
-| **Memory** `/memory` | Persisted preferences (delete/edit) |
-| **Observability** `/observability` | LLM calls per run: tokens, latency, cost, failures |
+| **Memory** `/memory` | Saved standing rules per company (delete) |
+| **Usage** `/observability` | Total spend against the cap, and calls, errors, average latency and cost per stage and model |
 
 `better-sqlite3` and `@huggingface/transformers` are native or ONNX packages, so they are listed in `serverExternalPackages` in `next.config.ts`.
 
-A CLI (`scripts/cli.ts`, built with `commander` and run with `tsx`) exposes the same `src/lib` pipeline for scripted work: `pnpm vryse ingest | profile | generate | evaluate | calibrate | export`.
+A CLI (`scripts/cli.ts`, built with `commander` and run with `tsx`) exposes the same `src/lib` pipeline: `pnpm vryse ping | ingest | profile stats|build | index build | search | excerpts | generate | evaluate | weaknesses | revise | memory | noise | calibrate | export | cost`.
 
 ---
 
@@ -266,14 +275,18 @@ A CLI (`scripts/cli.ts`, built with `commander` and run with `tsx`) exposes the 
 
 | Step | LLM calls | Est. cost with default models |
 |---|---|---|
-| Profile build (one-time) | N + 1 (N ≈ 70 Flash-Lite + 1 GPT-5 mini) | ≈ $0.06. Cached on disk; rebuild only when the corpus changes |
-| Retrieval | 0 | $0 (local embeddings) |
-| Plan + write | 2 (GPT-5 mini) | ≈ $0.025, including reasoning tokens |
-| Lint repair | 0–1 | Only on hard-constraint failure |
-| Evaluate | 1 (Gemini 2.5 Flash) | ≈ $0.01. Deterministic metrics are free |
-| Each revision cycle | 1 compile + 1 revise + 1 evaluate + 1 pairwise | ≈ $0.04 |
+Measured from `llm_calls` (average cost per call: plan $0.008, write/revise $0.009–0.012, judge run $0.0075, compile $0.007, verify $0.003, pairwise $0.003):
 
-That comes to about **$0.08 for a full generate → evaluate → feedback → revise → re-evaluate loop**. The whole project should cost roughly $1–2, comfortably inside the free **$5 per 30 days** of AI Gateway credit. That covers the profile build, calibration on about 7 held-out topics (≈ $0.50), the demo, and development. These are estimates from list prices; the real numbers come from `llm_calls` (`pnpm vryse cost`) and are reported in the README.
+| Step | LLM calls | Measured cost |
+|---|---|---|
+| Profile build (one-time) | 54 Flash-Lite + 1 GPT-5 mini | ≈ $0.03 per build. Traits are cached, so a rebuild only pays for synthesis |
+| Retrieval and index | 0 | $0 (local embeddings; the index takes about 60 s on CPU) |
+| Plan + write | 2 (GPT-5 mini) | ≈ $0.015–0.02 |
+| Lint repair | 0–1 | Rare after length calibration |
+| Evaluate | 3 judge runs | ≈ $0.022 (1 run while developing: ≈ $0.008) |
+| Revision cycle | compile + revise + evaluate (×3) + verify + pairwise | ≈ $0.045–0.05 |
+
+The demo run (1 article and 2 feedback cycles, 3 judge runs each) cost **$0.133**, and calibration $0.58. **The whole project, including every experiment, cost $1.33** of the free $5 AI Gateway credit. Latency: about 50 s for a new article with its scores, and 70–90 s per feedback cycle.
 
 The context per writer call is bounded: profile (~2k tokens), excerpts (~2–3k), outline (~1k) and memory. It doesn't grow with the corpus.
 
@@ -285,7 +298,8 @@ The context per writer call is bounded: profile (~2k tokens), excerpts (~2–3k)
 
 - Every LLM call is logged with its stage, model, tokens, latency, cost estimate and error. The observability page aggregates them.
 - Validation failures, retries and repair calls are counted per run, and a high count signals prompt drift.
-- Quality is tracked per run: overall score per iteration, number of iterations to approval, and the distribution of human ratings.
+- Quality is tracked per run: overall score per version, verdicts, instruction verification and human ratings (exportable with `vryse export`).
+- Cost is bounded by the hard spending cap, and the Usage page shows spend against it.
 - Failures are isolated. If the judge fails, deterministic scores are still shown and the judge part is marked "unavailable" instead of failing the whole run.
 
 ---

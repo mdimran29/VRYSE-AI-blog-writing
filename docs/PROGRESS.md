@@ -1,6 +1,6 @@
 # What has been built so far — and what it actually does
 
-_Last updated: 2026-10-12, after Step 10 of [plan.md](../plan.md)._
+_Last updated: 2026-10-12. **All 12 steps of [plan.md](../plan.md) are complete.**_
 
 This document explains, in plain language, every part of the system that exists today: what was built, what it does when you run it, how to try it yourself, and what the results were. For the full design, see [ARCHITECTURE.md](../ARCHITECTURE.md).
 
@@ -24,7 +24,7 @@ You give the system a short **brief**, for example "an article about moving empl
  Brief ──► ⑤ Find similar passages ──► ⑥ Plan outline ──► Write ──► Check ──► (Fix once) ──► ⑦ Score ──► Saved article + scores
 ```
 
-**What is not built yet:** the final before/after demo (Step 11) and the final README polish (Step 12). Everything can now be used from the **web interface** (`pnpm dev`, then open http://localhost:3000) or the command line.
+**Everything is built.** Use it from the **web interface** (`pnpm dev`, then open http://localhost:3000) or the command line (`pnpm vryse …`). The final results are in the [README](../README.md).
 
 ---
 
@@ -351,12 +351,38 @@ pnpm dev     # then open http://localhost:3000
 
 ---
 
-## 4. Money and time so far
+### Step 11 — The before/after demo
+
+**What was done:** one complete, real example of the whole loop, with 3 judge runs per score so the 3-point rule is valid. The feedback was written by the developer acting as the editor.
+
+| | v1 | v2 | v3 |
+|---|---|---|---|
+| Overall score | 83.5 | **89.1** | 88.4 |
+| Instructions done | — | 7 of 7 ✓ | 3 of 3 ✓ |
+| Verdict | — | **IMPROVED** (+5.6) | MIXED (−0.7, within noise) |
+| Side-by-side judge preferred | — | v1 (the edit went too far) | **v3** |
+
+- **Cycle 1** fixed what was asked: unsourced figures, "we" instead of "you", choppy paragraphs, too much bold, a wordy heading. The score rose well past the noise threshold. But the side-by-side judge noticed the bold removal went **too** far and the "(hypothetical example)" tags read badly.
+- **Cycle 2** fixed exactly those two points, and the side-by-side judge then preferred the new version.
+- **From start to finish:** +4.9 points, and style rose from 56 to 76.
+
+Everything is saved in `examples/before_after/`: the brief, all three versions, every score, instruction and verdict, and the diffs. Screenshots are in `docs/images/`. **Cost of the whole demo: $0.13.**
+
+### Step 12 — Final documentation and checks
+
+- **README rewritten** for the VRYSE reviewers, matching what was actually built. I removed promises of features that weren't built, such as automatic Google Drive import. It covers results, setup, every setting, every command with its cost, how scoring and improvement work, the reasons behind each design decision, the demo, limitations and next steps.
+- **ARCHITECTURE.md updated** everywhere the build differed from the original plan.
+- **A database issue found and fixed:** while the website was running, it didn't see articles created from the command line, and showed a "malformed" error. The database file itself was healthy (checked). The cause was a mode in which SQLite keeps a shared index that went stale between the two programs. The database now uses a simpler mode that both share safely. **Restart `pnpm dev` once** for this to take effect.
+- **Final checks:** a fresh copy of the project installs, type-checks, passes all 170 tests and builds.
+
+---
+
+## 4. Money and time
 
 | Item | Amount |
 |---|---|
-| Total AI spend for all building and testing | **$1.16** |
-| Free credit left (of $5 per 30 days) | **about $3.84** |
+| Total AI spend for the whole project | **$1.33** |
+| Free credit left (of $5 per 30 days) | **about $3.67** |
 | Cost of one fresh article, including its score (3 judge runs) | about **$0.05** |
 | Spending cap | **$3.00** total (`VRYSE_BUDGET_USD`) |
 | Time for one fresh article, including its score | about **2 minutes** |
@@ -366,7 +392,7 @@ pnpm dev     # then open http://localhost:3000
 ## 5. How to check that everything works
 
 ```bash
-pnpm test        # 167 automatic tests
+pnpm test        # 170 automatic tests
 pnpm typecheck   # TypeScript has no errors
 pnpm lint        # code style is clean
 pnpm vryse ping  # all three AI models answer
@@ -385,8 +411,10 @@ pnpm vryse ping  # all three AI models answer
 
 ---
 
-## 7. What comes next
+## 7. What could come next
 
-| Step | What it will add |
-|---|---|
-| 11–12 | The before/after demo and the final README |
+The project is complete. The most valuable next steps, also listed in the README:
+- checking facts against the web for every figure;
+- separate style profiles for different article types (listicle, how-to, comparison);
+- learning the score weights from real editors' ratings;
+- a hosted version (Postgres, file storage, background jobs, login).
