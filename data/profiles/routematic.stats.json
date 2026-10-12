@@ -1,0 +1,645 @@
+{
+  "company": "routematic",
+  "brandTerms": [
+    "Routematic"
+  ],
+  "articleCount": 54,
+  "articleIds": [
+    "b10-best-employee-transportation-management-software-for-cor-51b8ab",
+    "30-employee-transportation-survey-questions-for-hr-teams-1d35d7",
+    "7-benefits-of-employee-transport-management-software-2b5d6d",
+    "7-ways-to-improve-employee-transportation-efficiency-in-2026-76bb93",
+    "a-practical-checklist-to-choose-the-best-transportation-mana-63a333",
+    "best-corporate-transport-management-software-63c7d6",
+    "best-employee-transport-management-systems-in-india-top-soft-e20adb",
+    "best-employee-transportation-service-providers-in-india-12076b",
+    "best-route-optimization-software-for-fleet-management-909efe",
+    "compare-pricing-for-staff-commute-services-in-delhi-ncr-dc27e6",
+    "corporate-mobility-strategy-for-hybrid-workplaces-a-framewor-3775ee",
+    "corporate-transport-transformation-modernising-employee-tran-f44f32",
+    "corporate-transportation-analytics-turning-data-into-better--683b1f",
+    "corporate-transportation-management-a-practical-guide-for-bu-401b40",
+    "corporate-transportation-policies-for-employees-in-india-a-c-2a801e",
+    "employee-commute-management-in-2026-how-companies-can-improv-d873a4",
+    "employee-commute-safety-best-practices-every-employer-should-3a5c14",
+    "employee-transport-management-solution-for-enterprises-3cfa73",
+    "employee-transport-solutions-for-night-shifts-f6865f",
+    "employee-transportation-optimization-strategies-for-modern-e-a6ee4e",
+    "employee-transportation-planning-a-complete-guide-for-2026-18d542",
+    "employee-transportation-policy-in-india-4ba62c",
+    "employee-transportation-strategy-key-components-every-busine-b99d2d",
+    "how-can-sustainable-commuting-incentives-transform-employee--fc9fd7",
+    "how-corporate-mobility-platforms-reduce-employee-transportat-8eb879",
+    "how-corporate-transportation-can-improve-women-s-safety-in-i-cb0b61",
+    "how-do-you-commute-to-the-office-a-look-at-modern-workplace--734a4b",
+    "how-employee-transportation-apps-are-revolutionizing-travel--8ef6e2",
+    "how-route-optimisation-improves-corporate-mobility-efficienc-a2aacf",
+    "how-to-choose-the-best-transport-software-for-enterprises-e8d6bc",
+    "how-to-improve-service-quality-in-employee-transportation-pr-744ae5",
+    "how-to-manage-employee-transport-in-a-corporate-company-comp-474fc1",
+    "how-to-reduce-employee-transportation-cost-6-crucial-mistake-8d0b55",
+    "how-to-select-an-employee-transport-company-a-practical-guid-8b3fda",
+    "leading-employee-transport-software-companies-in-india-b37b2e",
+    "modes-of-corporate-mobility-a-guide-to-sustainable-commuting-938ce4",
+    "5-common-employee-transportation-issues-and-how-to-solve-the-e58b4e",
+    "ai-in-employee-transportation-management-systems-benefits-fo-698bcf",
+    "sop-for-employee-transportation-a-practical-template-for-adm-ea78c9",
+    "safety-and-compliance-in-employee-transportation-a-comprehen-7f90f3",
+    "shuttle-service-in-kolkata-the-smarter-way-for-businesses-to-849bef",
+    "staff-transportation-pricing-in-delhi-ncr-491500",
+    "the-ultimate-employee-transport-management-checklist-a66a61",
+    "top-10-corporate-car-rental-companies-in-india-for-employee--126f5d",
+    "top-10-corporate-car-rental-companies-in-india-for-employee--ea3151",
+    "top-10-enterprise-mobility-solution-providers-8fbe71",
+    "top-corporate-transportation-challenges-in-2026-and-how-to-o-75c0bc",
+    "top-employee-transport-management-companies-comparison-02b09a",
+    "top-employee-transportation-benefits-that-improve-productivi-875b01",
+    "top-enterprise-mobility-trends-in-2026-cd1d12",
+    "top-5-vendors-for-employee-transport-management-ed79db",
+    "what-is-corporate-mobility-benefits-for-enterprises-employee-e0688c",
+    "what-is-a-transport-management-system-tms-for-enterprises-18b9ed",
+    "why-employee-transportation-audits-are-essential-for-cost-an-8e8037"
+  ],
+  "distributions": {
+    "numeric": {
+      "wordCount": {
+        "p10": 1323.2,
+        "p25": 1382.25,
+        "median": 1467.5,
+        "p75": 1903.25,
+        "p90": 2222.6000000000004,
+        "mean": 1678.4259259259259,
+        "n": 54
+      },
+      "paragraphCount": {
+        "p10": 24,
+        "p25": 27.25,
+        "median": 36,
+        "p75": 42.5,
+        "p90": 49.7,
+        "mean": 37.01851851851852,
+        "n": 54
+      },
+      "h2Count": {
+        "p10": 5,
+        "p25": 6,
+        "median": 7,
+        "p75": 9,
+        "p90": 10,
+        "mean": 7.462962962962963,
+        "n": 54
+      },
+      "h3Count": {
+        "p10": 4,
+        "p25": 5,
+        "median": 10,
+        "p75": 13.75,
+        "p90": 18.700000000000003,
+        "mean": 11.666666666666666,
+        "n": 54
+      },
+      "wordsPerH2SectionMean": {
+        "p10": 116.39999999999999,
+        "p25": 141.92857142857142,
+        "median": 195.6,
+        "p75": 267.5625,
+        "p90": 311.20000000000005,
+        "mean": 215.83250828389714,
+        "n": 54
+      },
+      "h3PerH2": {
+        "p10": 0,
+        "p25": 0,
+        "median": 1,
+        "p75": 1.65625,
+        "p90": 2.9400000000000004,
+        "mean": 1.2265425418203193,
+        "n": 54
+      },
+      "headingWordsMean": {
+        "p10": 4.079699248120301,
+        "p25": 4.87012987012987,
+        "median": 5.841666666666667,
+        "p75": 6.966666666666667,
+        "p90": 8,
+        "mean": 6.092224327275498,
+        "n": 54
+      },
+      "questionHeadingRate": {
+        "p10": 0,
+        "p25": 0,
+        "median": 0.08391608391608392,
+        "p75": 0.2222222222222222,
+        "p90": 0.4812500000000002,
+        "mean": 0.17294881721051306,
+        "n": 54
+      },
+      "howToHeadingRate": {
+        "p10": 0,
+        "p25": 0,
+        "median": 0,
+        "p75": 0.07023809523809524,
+        "p90": 0.1,
+        "mean": 0.03786957032571067,
+        "n": 54
+      },
+      "numberedHeadingRate": {
+        "p10": 0,
+        "p25": 0,
+        "median": 0.24404761904761904,
+        "p75": 0.5555555555555556,
+        "p90": 0.6666666666666666,
+        "mean": 0.28431302696653576,
+        "n": 54
+      },
+      "listCount": {
+        "p10": 1,
+        "p25": 1,
+        "median": 3.5,
+        "p75": 6.75,
+        "p90": 9.700000000000003,
+        "mean": 4.666666666666667,
+        "n": 54
+      },
+      "listItemCount": {
+        "p10": 5,
+        "p25": 7.5,
+        "median": 17,
+        "p75": 29.75,
+        "p90": 51.80000000000001,
+        "mean": 22.666666666666668,
+        "n": 54
+      },
+      "tableCount": {
+        "p10": 0,
+        "p25": 0,
+        "median": 1,
+        "p75": 1,
+        "p90": 2,
+        "mean": 1.0555555555555556,
+        "n": 54
+      },
+      "faqQuestionCount": {
+        "p10": 4,
+        "p25": 4,
+        "median": 5,
+        "p75": 5,
+        "p90": 5,
+        "mean": 4.574074074074074,
+        "n": 54
+      },
+      "introWords": {
+        "p10": 87.4,
+        "p25": 106,
+        "median": 127.5,
+        "p75": 153.25,
+        "p90": 215.00000000000003,
+        "mean": 135.57407407407408,
+        "n": 54
+      },
+      "closingWords": {
+        "p10": 50.5,
+        "p25": 83,
+        "median": 105.5,
+        "p75": 152.5,
+        "p90": 198.90000000000003,
+        "mean": 130.85185185185185,
+        "n": 54
+      },
+      "wordsPerParagraphMean": {
+        "p10": 25.122297872340425,
+        "p25": 26.81707317073171,
+        "median": 32.546875,
+        "p75": 40.77068965517242,
+        "p90": 49.237719298245615,
+        "mean": 35.17915824124856,
+        "n": 54
+      },
+      "wordsPerParagraphP90": {
+        "p10": 39.46,
+        "p25": 43.00000000000001,
+        "median": 51.00000000000001,
+        "p75": 65.19999999999999,
+        "p90": 74.25,
+        "mean": 55.76851851851853,
+        "n": 54
+      },
+      "sentencesPerParagraphMean": {
+        "p10": 1.481578947368421,
+        "p25": 1.6534090909090908,
+        "median": 2.087037037037037,
+        "p75": 2.5625,
+        "p90": 3.013888888888889,
+        "mean": 2.2018383088291418,
+        "n": 54
+      },
+      "oneSentenceParagraphRate": {
+        "p10": 0.10399274047186932,
+        "p25": 0.21224256292906177,
+        "median": 0.3011627906976744,
+        "p75": 0.4393939393939394,
+        "p90": 0.5736752136752137,
+        "mean": 0.32132032863708204,
+        "n": 54
+      },
+      "wordsPerSentenceMean": {
+        "p10": 11.186622757210992,
+        "p25": 13.482556100981768,
+        "median": 14.68235632183908,
+        "p75": 16.646874397067336,
+        "p90": 17.992941176470588,
+        "mean": 14.768483875576203,
+        "n": 54
+      },
+      "wordsPerSentenceStd": {
+        "p10": 6.04189833353382,
+        "p25": 6.653783807646695,
+        "median": 7.449105946896672,
+        "p75": 8.448064260378528,
+        "p90": 9.103839160642924,
+        "mean": 7.544239532582711,
+        "n": 54
+      },
+      "questionSentenceRate": {
+        "p10": 0,
+        "p25": 0,
+        "median": 0,
+        "p75": 0.01130050505050505,
+        "p90": 0.02900000000000001,
+        "mean": 0.011595250023698498,
+        "n": 54
+      },
+      "sentenceStartDiversity": {
+        "p10": 0.49390815370196817,
+        "p25": 0.5350219633307869,
+        "median": 0.5924128011506652,
+        "p75": 0.6554615384615385,
+        "p90": 0.7184587813620072,
+        "mean": 0.5937314952802628,
+        "n": 54
+      },
+      "fleschReadingEase": {
+        "p10": 8.49530453655196,
+        "p25": 13.898097396716615,
+        "median": 26.445487477752238,
+        "p75": 43.074834763995966,
+        "p90": 51.30440949006458,
+        "mean": 28.81363063869963,
+        "n": 54
+      },
+      "fleschKincaidGrade": {
+        "p10": 9.895397891089788,
+        "p25": 11.299962530332058,
+        "median": 13.935070120429032,
+        "p75": 15.893331288719889,
+        "p90": 16.995365800453648,
+        "mean": 13.556823303545581,
+        "n": 54
+      },
+      "secondPersonPer1k": {
+        "p10": 0,
+        "p25": 0.7319846022148655,
+        "median": 4.0012420175055174,
+        "p75": 8.518968021405582,
+        "p90": 14.333162435077242,
+        "mean": 5.5794311099306695,
+        "n": 54
+      },
+      "firstPersonPluralPer1k": {
+        "p10": 0,
+        "p25": 0,
+        "median": 0.6042220035294006,
+        "p75": 1.4445612077918475,
+        "p90": 2.600603931718741,
+        "mean": 1.1091604293568667,
+        "n": 54
+      },
+      "brandMentionsPer1k": {
+        "p10": 0.20174848688634883,
+        "p25": 1.4222247582749694,
+        "median": 2.525268628638842,
+        "p75": 3.9783651447313266,
+        "p90": 8.746388407290578,
+        "mean": 3.6758754303086927,
+        "n": 54
+      },
+      "numbersPer1k": {
+        "p10": 5.932640373678544,
+        "p25": 10.088875827998665,
+        "median": 14.778818335686552,
+        "p75": 22.8367830950611,
+        "p90": 30.183893468611295,
+        "mean": 17.587265603126294,
+        "n": 54
+      },
+      "linksPer1k": {
+        "p10": 2.808201107124804,
+        "p25": 3.17722056197061,
+        "median": 4.23676851062557,
+        "p75": 5.223536587221032,
+        "p90": 6.328491096532334,
+        "mean": 4.3940729262672225,
+        "n": 54
+      },
+      "boldPer1k": {
+        "p10": 2.845777859582388,
+        "p25": 5.140895552624967,
+        "median": 9.514678846374814,
+        "p75": 11.59016562268065,
+        "p90": 17.44400705850414,
+        "mean": 9.713314033872694,
+        "n": 54
+      },
+      "aiIsmsPer1k": {
+        "p10": 0,
+        "p25": 0,
+        "median": 0,
+        "p75": 0.6184669865894024,
+        "p90": 1.150994078135666,
+        "mean": 0.4153641756432132,
+        "n": 54
+      }
+    },
+    "rates": {
+      "hasFaq": 1,
+      "hasKeyTakeaways": 0.2777777777777778,
+      "hasConclusionHeading": 0.6296296296296297,
+      "closingHasCta": 0.5
+    }
+  },
+  "signatureTerms": [
+    {
+      "term": "employee transportation",
+      "docFrequency": 50,
+      "count": 397,
+      "score": 8.314516674006164
+    },
+    {
+      "term": "employee transport",
+      "docFrequency": 49,
+      "count": 332,
+      "score": 7.905527278028938
+    },
+    {
+      "term": "employee",
+      "docFrequency": 54,
+      "count": 1345,
+      "score": 7.204892510204673
+    },
+    {
+      "term": "transport",
+      "docFrequency": 54,
+      "count": 1319,
+      "score": 7.1853870155804165
+    },
+    {
+      "term": "transportation",
+      "docFrequency": 53,
+      "count": 773,
+      "score": 6.528394616671399
+    },
+    {
+      "term": "safety",
+      "docFrequency": 54,
+      "count": 653,
+      "score": 6.483107351457199
+    },
+    {
+      "term": "vehicle",
+      "docFrequency": 54,
+      "count": 470,
+      "score": 6.154858094016418
+    },
+    {
+      "term": "compliance",
+      "docFrequency": 53,
+      "count": 500,
+      "score": 6.101483765879589
+    },
+    {
+      "term": "route",
+      "docFrequency": 54,
+      "count": 423,
+      "score": 6.049733455231958
+    },
+    {
+      "term": "corporate",
+      "docFrequency": 50,
+      "count": 487,
+      "score": 5.7317735239381
+    },
+    {
+      "term": "operations",
+      "docFrequency": 52,
+      "count": 383,
+      "score": 5.730248383973366
+    },
+    {
+      "term": "management",
+      "docFrequency": 50,
+      "count": 476,
+      "score": 5.710663417489205
+    },
+    {
+      "term": "tracking",
+      "docFrequency": 53,
+      "count": 325,
+      "score": 5.679732615045102
+    },
+    {
+      "term": "fleet",
+      "docFrequency": 51,
+      "count": 385,
+      "score": 5.624957515605674
+    },
+    {
+      "term": "billing",
+      "docFrequency": 50,
+      "count": 425,
+      "score": 5.605962357656825
+    },
+    {
+      "term": "driver",
+      "docFrequency": 53,
+      "count": 297,
+      "score": 5.591591755273823
+    },
+    {
+      "term": "employees",
+      "docFrequency": 51,
+      "count": 331,
+      "score": 5.48262747064335
+    },
+    {
+      "term": "trip",
+      "docFrequency": 50,
+      "count": 330,
+      "score": 5.372331829052836
+    },
+    {
+      "term": "automated",
+      "docFrequency": 52,
+      "count": 231,
+      "score": 5.24500635790089
+    },
+    {
+      "term": "cost",
+      "docFrequency": 49,
+      "count": 281,
+      "score": 5.119508268073474
+    },
+    {
+      "term": "vehicles",
+      "docFrequency": 50,
+      "count": 249,
+      "score": 5.112463812835413
+    },
+    {
+      "term": "data",
+      "docFrequency": 49,
+      "count": 251,
+      "score": 5.017444912741848
+    },
+    {
+      "term": "transport management",
+      "docFrequency": 34,
+      "count": 178,
+      "score": 4.8991977055162685
+    },
+    {
+      "term": "enterprises",
+      "docFrequency": 46,
+      "count": 303,
+      "score": 4.870060634531226
+    },
+    {
+      "term": "commute",
+      "docFrequency": 47,
+      "count": 265,
+      "score": 4.859709750235923
+    },
+    {
+      "term": "shift",
+      "docFrequency": 49,
+      "count": 209,
+      "score": 4.852004981576962
+    },
+    {
+      "term": "routes",
+      "docFrequency": 50,
+      "count": 184,
+      "score": 4.833662800998449
+    },
+    {
+      "term": "companies",
+      "docFrequency": 46,
+      "count": 265,
+      "score": 4.75631167044367
+    },
+    {
+      "term": "vendor",
+      "docFrequency": 46,
+      "count": 261,
+      "score": 4.743404577277971
+    },
+    {
+      "term": "operational",
+      "docFrequency": 45,
+      "count": 272,
+      "score": 4.6745598293208
+    },
+    {
+      "term": "costs",
+      "docFrequency": 46,
+      "count": 236,
+      "score": 4.65797715726326
+    },
+    {
+      "term": "routing",
+      "docFrequency": 47,
+      "count": 193,
+      "score": 4.584987656962526
+    },
+    {
+      "term": "route planning",
+      "docFrequency": 37,
+      "count": 81,
+      "score": 4.529128115243816
+    },
+    {
+      "term": "technology",
+      "docFrequency": 45,
+      "count": 227,
+      "score": 4.524454690795368
+    },
+    {
+      "term": "trips",
+      "docFrequency": 48,
+      "count": 158,
+      "score": 4.505692624195761
+    },
+    {
+      "term": "time",
+      "docFrequency": 46,
+      "count": 192,
+      "score": 4.4830323831411985
+    },
+    {
+      "term": "planning",
+      "docFrequency": 46,
+      "count": 187,
+      "score": 4.460672783151439
+    },
+    {
+      "term": "real-time",
+      "docFrequency": 45,
+      "count": 206,
+      "score": 4.443932327721141
+    },
+    {
+      "term": "platform",
+      "docFrequency": 43,
+      "count": 257,
+      "score": 4.421801150956103
+    },
+    {
+      "term": "asked questions",
+      "docFrequency": 42,
+      "count": 43,
+      "score": 4.414887906237972
+    }
+  ],
+  "aiIsms": [
+    {
+      "phrase": "seamless",
+      "articles": 8,
+      "total": 14
+    },
+    {
+      "phrase": "leverage",
+      "articles": 6,
+      "total": 8
+    },
+    {
+      "phrase": "robust",
+      "articles": 5,
+      "total": 7
+    },
+    {
+      "phrase": "moreover",
+      "articles": 3,
+      "total": 4
+    },
+    {
+      "phrase": "furthermore",
+      "articles": 2,
+      "total": 2
+    },
+    {
+      "phrase": "game-changer",
+      "articles": 1,
+      "total": 1
+    }
+  ],
+  "builtAt": "2026-10-11T22:24:05.085Z"
+}
