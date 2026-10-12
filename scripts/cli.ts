@@ -12,6 +12,8 @@ import { buildProfile } from "@/lib/analysis/profile";
 import { buildIndex, loadIndex } from "@/lib/retrieval/store";
 import { search, selectExcerpts } from "@/lib/retrieval/search";
 import type { ChunkRole } from "@/lib/retrieval/chunks";
+import { runGeneration } from "@/lib/pipeline";
+import fs from "node:fs";
 import { llmCalls } from "@/lib/db/schema";
 import { callObject, type LlmRole } from "@/lib/llm/call";
 import { parseModelString } from "@/lib/llm/models";
@@ -189,6 +191,24 @@ program
     show("Conclusion:", ex.conclusion);
     ex.body.forEach((c, i) => show(`Body ${i + 1}:`, c));
     console.log(`Excerpt budget used: ~${ex.tokens}/${opts.maxTokens} tokens`);
+  });
+
+program
+  .command("generate")
+  .description("Generate an article from a brief JSON file (retrieve → plan → write → lint → repair)")
+  .requiredOption("--brief <file>", "path to a brief .json (see examples/briefs/)")
+  .action(async (opts: { brief: string }) => {
+    const input = JSON.parse(fs.readFileSync(opts.brief, "utf8"));
+    const started = Date.now();
+    const result = await runGeneration(input, (e) => {
+      const t = ((Date.now() - started) / 1000).toFixed(1).padStart(5);
+      console.log(`${t}s  ${e.stage.padEnd(8)} ${e.status}${e.detail ? `  ${e.detail}` : ""}`);
+    });
+    const { lint, outline } = result;
+    console.log(`\n"${outline.title}"`);
+    console.log(`${lint.metrics.words} words (target ${result.brief.targetWords}) · ${lint.metrics.h2Count} H2 · ${lint.metrics.faqQuestions} FAQ questions${result.repaired ? " · repaired once" : ""}`);
+    for (const issue of lint.issues) console.log(`  ${issue.severity === "hard" ? "✗" : "·"} [${issue.code}] ${issue.message}`);
+    console.log(`Run ${result.runId} · cost $${result.costUsd.toFixed(4)}\nSaved ${path.relative(process.cwd(), result.files.markdown)}`);
   });
 
 program

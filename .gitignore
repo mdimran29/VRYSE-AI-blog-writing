@@ -45,6 +45,7 @@ next-env.d.ts
 /data/raw/
 /data/processed/
 /data/index/
+/data/runs/
 /data/*.db
 /data/*.db-*
 /data/.llm-cache/

@@ -12,7 +12,7 @@ Reference documents: [ARCHITECTURE.md](ARCHITECTURE.md) · [README.md](README.md
 
 ## Overview
 
-**Progress (2026-10-12):** ✅ Step 0 · ✅ Step 1 · ✅ Step 2 · ✅ Step 3 · ✅ Step 4 · ✅ Step 5 · ⏭ next: Step 6. **Client: Routematic.** VRYSE confirmed that any client's articles may be used, and the Protecto docs were access-restricted (see Step 2).
+**Progress (2026-10-12):** ✅ Step 0 · ✅ Step 1 · ✅ Step 2 · ✅ Step 3 · ✅ Step 4 · ✅ Step 5 · ✅ Step 6 · ⏭ next: Step 7. **Client: Routematic.** VRYSE confirmed that any client's articles may be used, and the Protecto docs were access-restricted (see Step 2).
 
 | Day | Focus | Milestone at end of day |
 |---|---|---|
@@ -132,18 +132,23 @@ Reference documents: [ARCHITECTURE.md](ARCHITECTURE.md) · [README.md](README.md
 
 **Done when** the excerpts for a test brief are clearly on-topic. ✅ Index: 457 chunks from 54 training articles, built in about 60 s on CPU, $0. Excerpt sets use about 800–1,000 of the 2,500-token budget.
 
-### Step 6 — Planner and writer (2.5 h)
+### Step 6 — Planner and writer (2.5 h) ✅
 
-- [ ] `src/lib/schemas/brief.ts`: a `Brief` schema with these fields: company, topic, audience, targetWords, keyPoints[], requiredSections[], toneOverride?, notes.
-- [ ] `src/lib/generation/planner.ts`: a structured-output call that returns an `Outline`. Every key point must map to a section, and the section count must fall within the profile band.
-- [ ] `src/lib/generation/writer.ts`: takes the outline, the profile's voice, style and vocabulary, the excerpts and memory, and returns Markdown. Use a prompt order that makes caching work: stable system prompt, then profile, then excerpts, then outline and brief.
-- [ ] `src/lib/generation/lint.ts`: check word count, heading count, AI-ism hits, n-gram overlap with references (flag 8-gram overlaps), and required sections. Make **one** repair call if a hard constraint fails.
-- [ ] Keep the prompts in `src/lib/generation/prompts/*.md` and load them with `fs` at runtime, so they're versioned and easy to read.
-- [ ] `src/lib/pipeline.ts`: `runGeneration(brief, onEvent)` chains retrieve → plan → write → lint → evaluate and emits stage events. The CLI and the API route both use it.
-- [ ] `pnpm vryse generate --brief examples/briefs/<x>.json` saves a run and iteration 1.
-- [ ] Write 3 example briefs, such as moving an employee fleet to EVs, transport for a new office in Hyderabad, and handling monsoon disruption in commute operations. Base them on topics that *aren't* already in the corpus.
+- [x] `src/lib/schemas/generation.ts` (planned as `brief.ts`): `BriefSchema` (topic, audience, targetWords, primaryKeyword, keyPoints, requiredSections, toneOverride, notes; unset fields are filled from the profile by `resolveBrief`), plus `OutlineSchema` and `Issue`.
+- [x] `src/lib/ingest/markdown.ts`: `markdownToBlocks`, so generated Markdown can be measured with the same 37 features as the reference articles.
+- [x] `src/lib/generation/style-guide.ts`: `renderStyleGuide(profile)` turns the profile into prompt text: voice, measured section order, length and sentence targets, counted intro/conclusion/CTA patterns, vocabulary, and do/don't rules.
+- [x] `src/lib/generation/planner.ts`: `planOutline` (GPT-5 mini, structured output) is shown the H2 outlines of the 3 closest reference articles. `checkOutline` then verifies in code that every key point is assigned, required sections exist, the FAQ has enough questions, the H2 count is within the house range, the conclusion is last, and the word budget is within ±20%. If anything fails, it re-plans **once** with the problems listed.
+- [x] Retrieval runs twice: once by topic, to find the articles whose structure the planner sees, and once per planned body section, for the voice excerpts the writer sees.
+- [x] `src/lib/generation/writer.ts`: `writeArticle` puts the stable house style in the instructions (cacheable) and the excerpts, allowed URLs, brief, memory and outline in the prompt. Truthfulness rules: only figures from the excerpts or the brief, and only URLs from the allowed list.
+  - **Length calibration:** GPT-5 mini overshot the word budget by 29–38% in 4 out of 4 runs, even with an explicit "never more than" instruction, so every draft needed a repair call. The writer now gets budgets scaled by **0.78**. The next two drafts came in at +9% and +6% with no repair.
+- [x] `src/lib/generation/lint.ts`: hard checks for exactly one H1, length within ±25%, FAQ present, required sections, **URLs not found in the corpus** (possibly invented) and **12-word passages copied** from the corpus. Soft checks for close paraphrase (8-word overlaps), avoid-phrases, H2 range, FAQ position and **figures found in neither the corpus nor the brief**. Hard issues trigger **one** `repairArticle` call, which is kept only if it reduces the hard issues.
+- [x] Prompts live in `src/lib/generation/prompts/{planner,writer,repair}.md`, loaded by `loadPrompt` with `{{placeholders}}` (a missing value throws).
+- [x] `src/lib/pipeline.ts`: `runGeneration(brief, onEvent)` runs retrieve → plan → retrieve per section → write → lint → (repair) → save. It saves a `runs` row and iteration 1, writes `data/runs/<runId>/v1.md`, `v1.outline.json` and `v1.lint.json` (git-ignored), and reports the run's cost. Evaluation is added in Step 7.
+- [x] `pnpm vryse generate --brief examples/briefs/<x>.json`
+- [x] 3 example briefs: `ev-fleet-transition`, `new-office-commute-plan` and `monsoon-commute-disruption`, on topics no single reference article covers.
+- [x] Vitest: markdown parsing (including a round trip), style-guide rendering, brief resolution, every `checkOutline` rule, every lint rule, the unsupported-figure check, the writer prompt contents and the planner re-plan (mock models). 112 tests in total.
 
-**Done when** the generated article reads like a Routematic post when you compare it side by side with a real one.
+**Done when** the generated article reads like a Routematic post. ✅ All three briefs produced articles in the house shape: intro ending in "what this article covers" → Key Takeaways → keyword-led H2s with H3s → conclusion → a 5-question FAQ last, with British spelling. The one specific statistic used (2.3 million EV sales and 29,000 chargers) comes from the reference articles, and no URLs were invented. Each article took 26–40 s and cost $0.007–0.03. The figure check found a weakness the evaluator must cover: unsourced planning numbers ("a 15–30% range buffer", "70–85% occupancy") get through when the same number appears elsewhere in the corpus.
 
 ### Step 7 — Evaluator (3 h)
 
